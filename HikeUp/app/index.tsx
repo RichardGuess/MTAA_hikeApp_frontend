@@ -1,33 +1,36 @@
 import { useState } from "react";
 import { View, Text, Button, TextInput, StyleSheet, Alert } from "react-native";
-import { getApp } from "@react-native-firebase/app";
-import auth from "@react-native-firebase/auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);  // To toggle between login and signup forms
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const handleAuth = async () => {
+    const url = isSignUp
+      ? "http://localhost:5423/auth/signup"
+      : "http://localhost:5423/auth/login"; // you’ll add this later if needed
+
     try {
-      let userCredential;
-      
-      if (isSignUp) {
-        // Create user with email and password
-        userCredential = await auth().createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        console.log("Account created:", user.email);
-        Alert.alert("Success", `Account created for ${user.email}`);
-      } else {
-        // Sign in with email and password
-        userCredential = await auth().signInWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        console.log("Logged in as:", user.email);
-        Alert.alert("Success", `Welcome back, ${user.email}`);
-      }
-    } catch (error) {
-      console.error("Authentication error:", error);
-      Alert.alert("Authentication failed", error.message);
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+
+      Alert.alert(
+        "Success",
+        isSignUp
+          ? `Account created for ${data.email}`
+          : `Welcome back, ${data.email}`
+      );
+    } catch (error: any) {
+      console.error("Auth error:", error);
+      Alert.alert("Auth failed", error.message);
     }
   };
 
@@ -56,7 +59,11 @@ export default function Login() {
       <Button title={isSignUp ? "Create Account" : "Log in"} onPress={handleAuth} />
 
       <Button
-        title={isSignUp ? "Already have an account? Log in" : "Don't have an account? Sign up"}
+        title={
+          isSignUp
+            ? "Already have an account? Log in"
+            : "Don't have an account? Sign up"
+        }
         onPress={() => setIsSignUp(!isSignUp)}
       />
     </View>
