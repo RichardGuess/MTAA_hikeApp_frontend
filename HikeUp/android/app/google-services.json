@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "938836830099",
+    "project_id": "hikeapp-mtaa",
+    "storage_bucket": "hikeapp-mtaa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:938836830099:android:58d7d47d9027f1513f6a66",
+        "android_client_info": {
+          "package_name": "com.xgersr.HikeUp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "938836830099-c7gvvtlnm3hivpsjfdrp7tjdu5eu36mk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.xgersr.HikeUp",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "938836830099-7tuc5uqomldvvna2fsot7g458c6mvduc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXP8mgkmaLkvUYZliVZC-kLD7cDaYX-R0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "938836830099-7tuc5uqomldvvna2fsot7g458c6mvduc.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "938836830099-phicg0fvs8kkrssaipq9cp65cgtp9spg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.xgersr.HikeUp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
