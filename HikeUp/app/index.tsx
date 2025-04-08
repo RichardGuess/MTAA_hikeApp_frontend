@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View, Text, Button, TextInput, StyleSheet, Alert } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -8,8 +9,8 @@ export default function Login() {
 
   const handleAuth = async () => {
     const url = isSignUp
-      ? "http://localhost:5423/auth/signup"
-      : "http://localhost:5423/auth/login"; // you’ll add this later if needed
+      ? "http://localhost:5423/api/auth/signup"
+      : "http://localhost:5423/api/auth/login";
 
     try {
       const res = await fetch(url, {
@@ -21,6 +22,12 @@ export default function Login() {
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Something went wrong");
+
+      // store token here
+      if (data.token) {
+        await AsyncStorage.setItem('token', data.token);
+        console.log("Token saved:", data.token);
+      }
 
       Alert.alert(
         "Success",
