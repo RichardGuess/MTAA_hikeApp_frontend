@@ -3,6 +3,8 @@ import { View, Text, Button, TextInput, StyleSheet, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import auth from "@react-native-firebase/auth";
+import NetInfo from '@react-native-community/netinfo';
+
 import { 
   GoogleSignin,
   isSuccessResponse,
@@ -17,12 +19,32 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const LOCAL_IP = "http://192.168.1.58:5433";
+  // const LOCAL_IP = "http://147.175.162.57:5433";
+  //const LOCAL_IP = "http://172.20.10.2:5433";
+
+  const getNetworkInfo = async () => {
+    const info = await NetInfo.fetch();
+    
+    // Log the full details object to see its structure
+    console.log("Network details:", JSON.stringify(info));
+    console.log("Network connection type:", info.type);
+    
+    // Try to access the IP address (may not exist in type definitions)
+    console.log("IP address (if available):", 
+      // @ts-ignore - Bypass TypeScript checking for this property
+      info.details?.ipAddress || 'Not found in details');
+      
+    // Log the raw details object
+    console.log("Raw details object:", info.details);
+  };
 
   useEffect(() => {
     GoogleSignin.configure({
       iosClientId: "938836830099-phicg0fvs8kkrssaipq9cp65cgtp9spg.apps.googleusercontent.com",
       webClientId: "938836830099-7tuc5uqomldvvna2fsot7g458c6mvduc.apps.googleusercontent.com",
       offlineAccess: true,
+      openIdRealm: 'your-realm', // This forces use of webview
+
     });
   }, []);
 
@@ -31,12 +53,19 @@ export default function AuthScreen() {
     try {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
   
-      const userInfo = (await GoogleSignin.getCurrentUser()) ?? await GoogleSignin.signIn();
-      const tokens = await GoogleSignin.getTokens(); // This gives you idToken
+      // First check if user is already signed in
+      const currentUser = await GoogleSignin.getCurrentUser();
+          
+      // If not signed in, do the sign in flow
+      if (!currentUser) {
+        await GoogleSignin.signIn();
+      }
+
+      const tokens = await GoogleSignin.getTokens(); // ✅ This gives you idToken
       const idToken = tokens.idToken;
   
       if (!idToken) throw new Error("No ID token returned from Google");
-  
+
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
       const userCredential = await auth().signInWithCredential(googleCredential);
   
@@ -144,6 +173,7 @@ export default function AuthScreen() {
           title={isSignUp ? "Already have an account? Log in" : "Don't have an account? Sign up"}
           onPress={() => setIsSignUp(!isSignUp)}
         />
+        <Button title="network test" onPress={getNetworkInfo}/>
       </View>
   ); 
 }

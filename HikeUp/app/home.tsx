@@ -8,7 +8,10 @@ export default function HomeScreen() {
   const [token, setToken] = useState<string | null>(null);
   const [hikes, setHikes] = useState<any[]>([]);
 
+  // const LOCAL_IP = "http://147.175.162.57:5433";
   const LOCAL_IP = "http://192.168.1.58:5433";
+  //const LOCAL_IP = "http://172.20.10.2:5433";
+
 
   useEffect(() => {
     const getToken = async () => {
@@ -34,7 +37,7 @@ export default function HomeScreen() {
             Authorization: `Bearer ${freshToken}`,
           },
         });
-
+        console.log('fetching');
         if (!res.ok) {
           throw new Error("Failed to fetch hikes");
         }
