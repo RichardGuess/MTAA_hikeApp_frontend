@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import auth from "@react-native-firebase/auth";
 import NetInfo from '@react-native-community/netinfo';
+import { LOCAL_IP } from "./constants";
 
 import { 
   GoogleSignin,
@@ -18,9 +19,10 @@ export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
-  const LOCAL_IP = "http://192.168.1.58:5433";
+  // const LOCAL_IP = "http://192.168.50.43:5433";
+  // const LOCAL_IP = "http://192.168.1.58:5433";
   // const LOCAL_IP = "http://147.175.162.57:5433";
-  //const LOCAL_IP = "http://172.20.10.2:5433";
+  // const LOCAL_IP = "http://172.20.10.2:5433";
 
   const getNetworkInfo = async () => {
     const info = await NetInfo.fetch();
@@ -53,31 +55,27 @@ export default function AuthScreen() {
     try {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
   
-      // First check if user is already signed in
-      const currentUser = await GoogleSignin.getCurrentUser();
-          
-      // If not signed in, do the sign in flow
-      if (!currentUser) {
-        await GoogleSignin.signIn();
-      }
-
-      const tokens = await GoogleSignin.getTokens(); // ✅ This gives you idToken
+      // clear any stale session to avoid stale token issues
+      await GoogleSignin.signOut();
+  
+      const user = await GoogleSignin.signIn(); // always sign in fresh
+      const tokens = await GoogleSignin.getTokens();
       const idToken = tokens.idToken;
   
       if (!idToken) throw new Error("No ID token returned from Google");
-
+  
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
       const userCredential = await auth().signInWithCredential(googleCredential);
   
       const firebaseUser = userCredential.user;
       const token = await firebaseUser.getIdToken();
   
-      //Check if user already exists in Firebase Auth
+      // check if user already exists in Firebase Auth
       const methods = await auth().fetchSignInMethodsForEmail(firebaseUser.email!);
   
       if (methods.length === 0) {
-        //New user — create entry in your backend if needed
-        const res = await fetch(`${LOCAL_IP}/api/auth/signup`, {
+        // send data to your backend to create user
+        await fetch(`${LOCAL_IP}/api/auth/signup`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -90,24 +88,24 @@ export default function AuthScreen() {
             profile_picture: firebaseUser.photoURL || "http://localhost:5433/uploads/default-profile.jpg",
             surname: firebaseUser.displayName?.split(" ")[1] || "User",
             birth_date: "2000-01-01",
-            region: "google-region",
+            region: "unknown",
             email: firebaseUser.email,
           }),
         });
-  
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Something went wrong with backend");
       }
   
+      // store token for future requests
       await AsyncStorage.setItem("token", token);
-      Alert.alert("Success", `Signed in as ${firebaseUser.email}`);
+      console.log("Login successful, navigating to /home");
       router.replace("/home");
   
     } catch (error: any) {
       console.error("Google Auth Error:", error);
-      Alert.alert("Auth failed", error.message || "Unknown error");
+      Alert.alert("Google Sign-in failed", error.message || "Unknown error");
     }
   };
+  
+  
 
   const handleAuth = async () => {
     try {

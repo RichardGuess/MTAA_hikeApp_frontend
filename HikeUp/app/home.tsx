@@ -3,14 +3,15 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
 import { useEffect, useState } from "react";
+import { LOCAL_IP } from "./constants";
 
 export default function HomeScreen() {
   const [token, setToken] = useState<string | null>(null);
   const [hikes, setHikes] = useState<any[]>([]);
-
+  // const LOCAL_IP = "http://192.168.50.43:5433";
   // const LOCAL_IP = "http://147.175.162.57:5433";
-  const LOCAL_IP = "http://192.168.1.58:5433";
-  //const LOCAL_IP = "http://172.20.10.2:5433";
+  // const LOCAL_IP = "http://192.168.1.58:5433";
+  // const LOCAL_IP = "http://172.20.10.2:5433";
 
 
   useEffect(() => {
