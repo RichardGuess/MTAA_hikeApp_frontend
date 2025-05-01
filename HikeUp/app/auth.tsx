@@ -95,9 +95,9 @@ export default function AuthScreen() {
       }
   
       // store token for future requests
-      await AsyncStorage.setItem("token", token);
+      // await AsyncStorage.setItem("token", token);
       console.log("Login successful, navigating to /home");
-      router.replace("/home");
+      await AsyncStorage.setItem("token", token);
   
     } catch (error: any) {
       console.error("Google Auth Error:", error);
@@ -144,9 +144,9 @@ export default function AuthScreen() {
         if (!res.ok) throw new Error(data.error || "Something went wrong");
       }
   
-      await AsyncStorage.setItem("token", idToken);
+      // await AsyncStorage.setItem("token", idToken);
       Alert.alert("Success", isSignUp ? `Account created for ${email}` : `Welcome back, ${email}`);
-      router.replace("/home");
+      await AsyncStorage.setItem("token", idToken);
   
     } catch (error: any) {
       console.error("Auth error:", error);

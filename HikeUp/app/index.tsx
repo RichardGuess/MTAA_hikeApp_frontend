@@ -1,18 +1,24 @@
-import { useEffect } from "react";
-import { router } from "expo-router";
-import { View, Text } from "react-native";
+import auth from "@react-native-firebase/auth";
+import { useEffect, useState } from "react";
+import { router, Slot } from "expo-router";
 
-// timeout workaround, lebo bez toho react sa znazil naloadovat vsetko instantly a expo nebolo ready, tak bol error
-export default function Index() {
+export default function Layout() {
+  const [initializing, setInitializing] = useState(true);
+
   useEffect(() => {
-    setTimeout(() => {
-      router.replace("/auth");
-    }, 0);
+    const unsubscribe = auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        router.replace("/home");
+      } else {
+        router.replace("/auth");
+      }
+      if (initializing) setInitializing(false);
+    });
+
+    return unsubscribe;
   }, []);
 
-  return (
-    <View>
-      <Text>Redirecting...</Text>
-    </View>
-  );
+  if (initializing) return null;
+
+  return <Slot />;
 }
