@@ -1,76 +1,70 @@
-import { View, Text, StyleSheet, FlatList } from "react-native";
-import { router } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import auth from "@react-native-firebase/auth";
-import { useEffect, useState } from "react";
-import { LOCAL_IP } from "./constants";
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Alert } from 'react-native';
+import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
+import * as Location from 'expo-location';
 
 export default function HomeScreen() {
-  const [token, setToken] = useState<string | null>(null);
-  const [hikes, setHikes] = useState<any[]>([]);
-  // const LOCAL_IP = "http://192.168.50.43:5433";
-  // const LOCAL_IP = "http://147.175.162.57:5433";
-  // const LOCAL_IP = "http://192.168.1.58:5433";
-  // const LOCAL_IP = "http://172.20.10.2:5433";
+  const mapRef = useRef<MapView>(null);
+  const [waypoints, setWaypoints] = useState([
+    { id: 1, latitude: 48.1486, longitude: 17.1077 },
+    { id: 2, latitude: 48.1490, longitude: 17.1111 },
+    { id: 3, latitude: 48.1500, longitude: 17.1150 },
+  ]);
+  const [initialRegion, setInitialRegion] = useState<null | {
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  }>(null);
 
+  const onMarkerDragEnd = (index: number, e: any) => {
+    const newCoords = e.nativeEvent.coordinate;
+    const updated = [...waypoints];
+    updated[index] = { ...updated[index], ...newCoords };
+    setWaypoints(updated);
+  };
 
   useEffect(() => {
-    const getToken = async () => {
-      const storedToken = await AsyncStorage.getItem("token");
-      setToken(storedToken);
-    };
-
-    getToken();
-  }, []);
-
-  useEffect(() => {
-    const getHikes = async () => {
-      try {
-        const currentUser = auth().currentUser;
-        if (!currentUser) throw new Error("No authenticated user");
-
-        const freshToken = await currentUser.getIdToken(true);
-
-        const res = await fetch(`${LOCAL_IP}/api/hikes/from-user`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${freshToken}`,
-          },
-        });
-        console.log('fetching');
-        if (!res.ok) {
-          throw new Error("Failed to fetch hikes");
-        }
-
-        const data = await res.json();
-        console.log("Hikes:", data);
-        setHikes(data);
-      } catch (error) {
-        console.error("Error fetching hikes:", error);
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Location permission is required to center the map.');
+        return;
       }
-    };
 
-    getHikes();
+      const location = await Location.getCurrentPositionAsync({});
+      setInitialRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+    })();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Your Hikes:</Text>
-      {hikes.length === 0 ? (
-        <Text style={styles.noHikesText}>No hikes. You should add some!</Text>
-      ) : (
-        <FlatList
-          data={hikes}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.hikeItem}>
-              <Text>Name: {item.name}</Text>
-              <Text>Nickname: {item.nickname}</Text>
-              <Text>Created At: {new Date(item.created_at).toLocaleString()}</Text>
-            </View>
-          )}
-        />
+      {initialRegion && (
+        <MapView
+          ref={mapRef}
+          provider={PROVIDER_GOOGLE}
+          style={StyleSheet.absoluteFillObject}
+          initialRegion={initialRegion}
+        >
+          <Polyline
+            coordinates={waypoints.map(p => ({ latitude: p.latitude, longitude: p.longitude }))}
+            strokeColor="#FF5722"
+            strokeWidth={4}
+          />
+          {waypoints.map((point, index) => (
+            <Marker
+              key={point.id}
+              coordinate={{ latitude: point.latitude, longitude: point.longitude }}
+              draggable
+              onDragEnd={(e) => onMarkerDragEnd(index, e)}
+            />
+          ))}
+        </MapView>
       )}
     </View>
   );
@@ -79,27 +73,5 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50,
-    paddingHorizontal: 16,
-    backgroundColor: "#f2f2f2",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
-  },
-  noHikesText: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 20,
-    textAlign: "center",
-  },
-  hikeItem: {
-    padding: 12,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
   },
 });
