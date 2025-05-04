@@ -1,77 +1,241 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
-import * as Location from 'expo-location';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Alert } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { Ionicons } from '@expo/vector-icons';
+import auth from '@react-native-firebase/auth';
+import { GOOGLE_MAPS_API, LOCAL_IP } from './constants';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
+  const searchRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
-  const [waypoints, setWaypoints] = useState([
-    { id: 1, latitude: 48.1486, longitude: 17.1077 },
-    { id: 2, latitude: 48.1490, longitude: 17.1111 },
-    { id: 3, latitude: 48.1500, longitude: 17.1150 },
-  ]);
-  const [initialRegion, setInitialRegion] = useState<null | {
-    latitude: number;
-    longitude: number;
-    latitudeDelta: number;
-    longitudeDelta: number;
-  }>(null);
 
-  const onMarkerDragEnd = (index: number, e: any) => {
-    const newCoords = e.nativeEvent.coordinate;
-    const updated = [...waypoints];
-    updated[index] = { ...updated[index], ...newCoords };
-    setWaypoints(updated);
-  };
+  const [points, setPoints] = useState<LatLng[]>([]);
+  const [region, setRegion] = useState({
+    latitude: 48.1486,
+    longitude: 17.1077,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  });
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Location permission is required to center the map.');
-        return;
+    setPoints([]);
+  }, []);
+
+  const onMapPress = (e: any) => {
+    const { latitude, longitude } = e.nativeEvent.coordinate;
+    if (points.length < 2) {
+      setPoints([...points, { latitude, longitude }]);
+    } else {
+      Alert.alert('Limit reached', 'Only 2 points (start and end) allowed to create a hike.');
+    }
+  };
+
+  const createHike = async () => {
+    if (points.length < 2) {
+      Alert.alert('Error', 'Please select at least a start and end point.');
+      return;
+    }
+
+    const user = auth().currentUser;
+    if (!user) {
+      Alert.alert('Error', 'User not authenticated.');
+      return;
+    }
+
+    try {
+      const token = await user.getIdToken();
+
+      const res = await fetch(`${LOCAL_IP}/api/hikes/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: 'My New Hike' }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+      const hike = await res.json();
+      const hikeId = hike?.hikeId || hike?.id || hike?.hike_id || hike?.response?.id;
+      if (!hikeId) throw new Error('Missing hike ID from response');
+
+      const updates = points.map((pt, index) => ({
+        type: 'insert',
+        latitude: pt.latitude,
+        longitude: pt.longitude,
+        order_number: index + 1,
+      }));
+
+      const wpRes = await fetch(`${LOCAL_IP}/api/mapbox/waypoints`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ hike_id: hikeId, updates }),
+      });
+
+      if (!wpRes.ok) {
+        await fetch(`${LOCAL_IP}/api/hikes/delete?hike_id=${hikeId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        throw new Error('Waypoint creation failed. Hike was rolled back.');
       }
 
-      const location = await Location.getCurrentPositionAsync({});
-      setInitialRegion({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-    })();
-  }, []);
+      setPoints([]);
+      Alert.alert('Success', 'Hike and waypoints created.');
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    }
+  };
+
+  const zoom = (zoomIn: boolean) => {
+    const factor = zoomIn ? 0.5 : 2;
+    const newRegion = {
+      ...region,
+      latitudeDelta: region.latitudeDelta * factor,
+      longitudeDelta: region.longitudeDelta * factor,
+    };
+    setRegion(newRegion);
+    mapRef.current?.animateToRegion(newRegion, 300);
+  };
 
   return (
     <View style={styles.container}>
-      {initialRegion && (
-        <MapView
-          ref={mapRef}
-          provider={PROVIDER_GOOGLE}
-          style={StyleSheet.absoluteFillObject}
-          initialRegion={initialRegion}
-        >
-          <Polyline
-            coordinates={waypoints.map(p => ({ latitude: p.latitude, longitude: p.longitude }))}
-            strokeColor="#FF5722"
-            strokeWidth={4}
-          />
-          {waypoints.map((point, index) => (
-            <Marker
-              key={point.id}
-              coordinate={{ latitude: point.latitude, longitude: point.longitude }}
-              draggable
-              onDragEnd={(e) => onMarkerDragEnd(index, e)}
-            />
-          ))}
-        </MapView>
+      <MapView
+        ref={mapRef}
+        provider={PROVIDER_GOOGLE}
+        style={StyleSheet.absoluteFillObject}
+        region={region}
+        onRegionChangeComplete={setRegion}
+        onPress={onMapPress}
+      >
+        <Polyline coordinates={points} strokeColor="#FF5722" strokeWidth={4} />
+        {points.map((point, index) => (
+          <Marker key={index} coordinate={point} />
+        ))}
+      </MapView>
+
+      <View style={styles.searchContainer} pointerEvents="box-none">
+        <GooglePlacesAutocomplete
+          ref={searchRef}
+          placeholder="Search"
+          fetchDetails
+          onPress={(data, details = null) => {
+            const loc = details?.geometry?.location;
+            if (loc) {
+              const newRegion = {
+                latitude: loc.lat,
+                longitude: loc.lng,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              };
+              setRegion(newRegion);
+              mapRef.current?.animateToRegion(newRegion, 300);
+            }
+          }}
+          query={{ key: GOOGLE_MAPS_API, language: 'en' }}
+          styles={{
+            textInput: styles.searchInput,
+            container: styles.searchBox,
+          }}
+          renderRightButton={() => (
+            <TouchableOpacity
+              onPress={() => searchRef.current?.setAddressText('')}
+              style={styles.clearIconContainer}
+            >
+              <Ionicons name="close-circle" size={20} color="#888" />
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+
+      <View style={styles.controlsContainer} pointerEvents="box-none">
+        <View style={styles.zoomControls}>
+          <TouchableOpacity onPress={() => zoom(true)} style={styles.zoomButton}>
+            <Ionicons name="add" size={24} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => zoom(false)} style={styles.zoomButton}>
+            <Ionicons name="remove" size={24} />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity onPress={() => setPoints([])} style={styles.clearButton}>
+          <Text style={{ color: 'white', fontSize: 12 }}>Clear</Text>
+        </TouchableOpacity>
+      </View>
+
+      {points.length === 2 && (
+        <TouchableOpacity onPress={createHike} style={styles.saveButton}>
+          <Text style={{ color: 'white' }}>Create Hike</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1 },
+  searchContainer: {
+    position: 'absolute',
+    top: 50,
+    width: width - 20,
+    alignSelf: 'center',
+    zIndex: 10,
+  },
+  searchBox: {
     flex: 1,
   },
+  searchInput: {
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: 'white',
+    paddingHorizontal: 10,
+    fontSize: 16,
+  },
+  clearIconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  controlsContainer: {
+    position: 'absolute',
+    bottom: 100,
+    right: 10,
+    alignItems: 'center',
+  },
+  zoomControls: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    elevation: 5,
+    marginBottom: 10,
+  },
+  zoomButton: {
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clearButton: {
+    backgroundColor: '#f44336',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  saveButton: {
+    position: 'absolute',
+    bottom: 40,
+    left: 10,
+    backgroundColor: '#2196F3',
+    padding: 10,
+    borderRadius: 8,
+  },
 });
+
+type LatLng = {
+  latitude: number;
+  longitude: number;
+};

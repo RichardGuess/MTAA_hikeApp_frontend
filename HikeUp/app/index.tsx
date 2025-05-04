@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import auth from "@react-native-firebase/auth";
 import { useEffect, useState } from "react";
 import { router, Slot } from "expo-router";
