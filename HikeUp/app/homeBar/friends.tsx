@@ -1,9 +1,9 @@
 import { View, Text } from "react-native";
 
-export default function SettingsScreen() {
+export default function FriendScreen() {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Settings Screen</Text>
+      <Text>Friends Screen</Text>
     </View>
   );
 }

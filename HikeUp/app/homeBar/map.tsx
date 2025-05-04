@@ -4,11 +4,11 @@ import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
-import { GOOGLE_MAPS_API, LOCAL_IP } from './constants';
+import { GOOGLE_MAPS_API, LOCAL_IP } from '../../assets/constants';
 
 const { width } = Dimensions.get('window');
 
-export default function HomeScreen() {
+export default function MapScreen() {
   const searchRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
 

@@ -3,6 +3,7 @@
 
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
+#import <GoogleMaps/GoogleMaps.h>
 
 @implementation AppDelegate
 
@@ -10,6 +11,7 @@
 {
 // @generated begin @react-native-firebase/app-didFinishLaunchingWithOptions - expo prebuild (DO NOT MODIFY) sync-ecd111c37e49fdd1ed6354203cd6b1e2a38cccda
 [FIRApp configure];
+[GMSServices provideAPIKey:@"AIzaSyB3hQf1jpnDFgVdGsAISpFj21Yqp493qtE"];
 // @generated end @react-native-firebase/app-didFinishLaunchingWithOptions
   self.moduleName = @"main";
 
