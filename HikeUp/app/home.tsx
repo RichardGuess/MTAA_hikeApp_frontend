@@ -13,6 +13,7 @@ export default function HomeScreen() {
   const mapRef = useRef<MapView>(null);
 
   const [points, setPoints] = useState<LatLng[]>([]);
+  const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
   const [region, setRegion] = useState({
     latitude: 48.1486,
     longitude: 17.1077,
@@ -22,14 +23,77 @@ export default function HomeScreen() {
 
   useEffect(() => {
     setPoints([]);
+    setRouteCoords([]);
   }, []);
+
+  // 🔁 Fetch route when both points are selected
+  useEffect(() => {
+    if (points.length === 2) {
+      fetchRoute();
+    }
+  }, [points]);
+
+  const decodePolyline = (t: string): LatLng[] => {
+    let points = [];
+    let index = 0, lat = 0, lng = 0;
+
+    while (index < t.length) {
+      let b, shift = 0, result = 0;
+      do {
+        b = t.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = t.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
+      lng += dlng;
+
+      points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+    }
+
+    return points;
+  };
+
+  const fetchRoute = async () => {
+    const origin = `${points[0].latitude},${points[0].longitude}`;
+    const destination = `${points[1].latitude},${points[1].longitude}`;
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&mode=walking&key=${GOOGLE_MAPS_API}`;
+    console.log('Fetching route from URL:', url);
+
+    try {
+      const res = await fetch(url);
+      const text = await res.text();
+      const json = JSON.parse(text);
+      console.log('Directions API result:', JSON.stringify(json));
+
+      if (json.routes?.length) {
+        const polyline = json.routes[0].overview_polyline.points;
+        const coords = decodePolyline(polyline);
+        setRouteCoords(coords);
+      } else {
+        Alert.alert('Routing error', 'No route found');
+      }
+    } catch (err: any) {
+      console.error('Route fetch error:', err);
+      Alert.alert('Error fetching route', err.message || 'Unknown error');
+    }
+  };
 
   const onMapPress = (e: any) => {
     const { latitude, longitude } = e.nativeEvent.coordinate;
     if (points.length < 2) {
       setPoints([...points, { latitude, longitude }]);
     } else {
-      Alert.alert('Limit reached', 'Only 2 points (start and end) allowed to create a hike.');
+      Alert.alert('Limit reached', 'Only 2 points (start and end) allowed.');
     }
   };
 
@@ -47,7 +111,6 @@ export default function HomeScreen() {
 
     try {
       const token = await user.getIdToken();
-
       const res = await fetch(`${LOCAL_IP}/api/hikes/add`, {
         method: 'POST',
         headers: {
@@ -87,6 +150,7 @@ export default function HomeScreen() {
       }
 
       setPoints([]);
+      setRouteCoords([]);
       Alert.alert('Success', 'Hike and waypoints created.');
     } catch (err: any) {
       Alert.alert('Error', err.message);
@@ -114,7 +178,11 @@ export default function HomeScreen() {
         onRegionChangeComplete={setRegion}
         onPress={onMapPress}
       >
-        <Polyline coordinates={points} strokeColor="#FF5722" strokeWidth={4} />
+        <Polyline
+          coordinates={routeCoords.length > 0 ? routeCoords : points}
+          strokeColor="blue"
+          strokeWidth={4}
+        />
         {points.map((point, index) => (
           <Marker key={index} coordinate={point} />
         ))}
@@ -164,7 +232,13 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={() => setPoints([])} style={styles.clearButton}>
+        <TouchableOpacity
+          onPress={() => {
+            setPoints([]);
+            setRouteCoords([]);
+          }}
+          style={styles.clearButton}
+        >
           <Text style={{ color: 'white', fontSize: 12 }}>Clear</Text>
         </TouchableOpacity>
       </View>
