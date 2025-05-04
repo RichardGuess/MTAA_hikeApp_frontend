@@ -19,7 +19,12 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.xgersr.HikeUp",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB3hQf1jpnDFgVdGsAISpFj21Yqp493qtE"
+        }
+      }
     },
     "web": {
       "bundler": "metro",

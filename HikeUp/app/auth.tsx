@@ -55,6 +55,7 @@ export default function AuthScreen() {
       await GoogleSignin.signOut();
   
       const user = await GoogleSignin.signIn(); // always sign in fresh
+      if (!user) throw new Error("Google sign-in failed");
       const tokens = await GoogleSignin.getTokens();
       const idToken = tokens.idToken;
   
@@ -94,8 +95,8 @@ export default function AuthScreen() {
       // await AsyncStorage.setItem("token", token);
       console.log("Login successful, navigating to /home");
       await AsyncStorage.setItem("token", token);
-      router.push('/home');
-      
+      router.replace("/home");
+  
     } catch (error: any) {
       console.error("Google Auth Error:", error);
       Alert.alert("Google Sign-in failed", error.message || "Unknown error");
@@ -144,7 +145,7 @@ export default function AuthScreen() {
       // await AsyncStorage.setItem("token", idToken);
       Alert.alert("Success", isSignUp ? `Account created for ${email}` : `Welcome back, ${email}`);
       await AsyncStorage.setItem("token", idToken);
-      router.push('/home');
+      router.replace("/home");
   
     } catch (error: any) {
       console.error("Auth error:", error);

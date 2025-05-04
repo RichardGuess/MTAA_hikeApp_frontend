@@ -1,55 +1,32 @@
-import { View, Text, StyleSheet, FlatList, Button, TouchableOpacity } from "react-native";
-import { router } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import auth from "@react-native-firebase/auth";
-import { useEffect, useState } from "react";
-import { LOCAL_IP } from '../../assets/constants';
-import HikeView from '../../components/hike-view'
+import React, { useRef, useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Alert } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { Ionicons } from '@expo/vector-icons';
+import auth from '@react-native-firebase/auth';
+import { GOOGLE_MAPS_API, LOCAL_IP } from './constants';
 
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
-  const [token, setToken] = useState<string | null>(null);
-  const [hikes, setHikes] = useState<any[]>([]);
+  const searchRef = useRef<any>(null);
+  const mapRef = useRef<MapView>(null);
+
+  const [points, setPoints] = useState<LatLng[]>([]);
+  const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
+  const [region, setRegion] = useState({
+    latitude: 48.1486,
+    longitude: 17.1077,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  });
+
   useEffect(() => {
     setPoints([]);
     setRouteCoords([]);
   }, []);
 
-  // Define Hike interface for better type safety
-  interface Hike {
-    id: string | number;
-    name: string;
-    nickname: string;
-    created_at: string;
-    // Add other properties as needed
-  }
-
-  const handleHikePress = (hike: Hike) => {
-    // Navigate to hike details page or perform other actions
-    router.push({
-      pathname: '/hike',
-      params: {
-        id: hike.id.toString(),  // Pass id as string
-        editable: 'false'
-      }  
-    });  
-  };
-
-  const handleDeletePress = () => {
-    console.log('delete pressed');
-  }
-  const handleAddPress = () => {
-    router.push({
-      pathname: "/hike",
-      params: {
-        editable: "true"
-      }
-    });
-  };
-  const handleFilterPress = () => {
-    console.log('filter pressed');
-  }
-
+  // 🔁 Fetch route when both points are selected
   useEffect(() => {
     if (points.length === 2) {
       fetchRoute();
@@ -193,62 +170,105 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Your Hikes:</Text>
-      {hikes.length === 0 ? (
-        <Text style={styles.noHikesText}>No hikes. You should add some!</Text>
-      ) : (
-        <FlatList
-          data={hikes}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <HikeView hike={item} onPress={handleHikePress}/>
+      <MapView
+        ref={mapRef}
+        provider={PROVIDER_GOOGLE}
+        style={StyleSheet.absoluteFillObject}
+        region={region}
+        onRegionChangeComplete={setRegion}
+        onPress={onMapPress}
+      >
+        <Polyline
+          coordinates={routeCoords.length > 0 ? routeCoords : points}
+          strokeColor="blue"
+          strokeWidth={4}
+        />
+        {points.map((point, index) => (
+          <Marker key={index} coordinate={point} />
+        ))}
+      </MapView>
+
+      <View style={styles.searchContainer} pointerEvents="box-none">
+        <GooglePlacesAutocomplete
+          ref={searchRef}
+          placeholder="Search"
+          fetchDetails
+          onPress={(data, details = null) => {
+            const loc = details?.geometry?.location;
+            if (loc) {
+              const newRegion = {
+                latitude: loc.lat,
+                longitude: loc.lng,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              };
+              setRegion(newRegion);
+              mapRef.current?.animateToRegion(newRegion, 300);
+            }
+          }}
+          query={{ key: GOOGLE_MAPS_API, language: 'en' }}
+          styles={{
+            textInput: styles.searchInput,
+            container: styles.searchBox,
+          }}
+          renderRightButton={() => (
+            <TouchableOpacity
+              onPress={() => searchRef.current?.setAddressText('')}
+              style={styles.clearIconContainer}
+            >
+              <Ionicons name="close-circle" size={20} color="#888" />
+            </TouchableOpacity>
           )}
         />
-      )}
-      <View style={styles.custom}>
-        <TouchableOpacity style={styles.button} onPress={handleDeletePress}>
-          <Text style={{fontSize: 20}}>Delete</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleAddPress}>
-          <Text style={{fontSize: 20}}>Add</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleFilterPress}>
-          <Text style={{fontSize: 20}}>Filter</Text>
+      </View>
+
+      <View style={styles.controlsContainer} pointerEvents="box-none">
+        <View style={styles.zoomControls}>
+          <TouchableOpacity onPress={() => zoom(true)} style={styles.zoomButton}>
+            <Ionicons name="add" size={24} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => zoom(false)} style={styles.zoomButton}>
+            <Ionicons name="remove" size={24} />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          onPress={() => {
+            setPoints([]);
+            setRouteCoords([]);
+          }}
+          style={styles.clearButton}
+        >
+          <Text style={{ color: 'white', fontSize: 12 }}>Clear</Text>
         </TouchableOpacity>
       </View>
+
+      {points.length === 2 && (
+        <TouchableOpacity onPress={createHike} style={styles.saveButton}>
+          <Text style={{ color: 'white' }}>Create Hike</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    display: 'flex',
-    justifyContent: 'center',
-    flex: 1,
-    paddingTop: 50,
-    paddingHorizontal: 16,
-    backgroundColor: "#f2f2f2",
-
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
-  },
-  custom: {
-    display: 'flex',
+  container: { flex: 1 },
+  searchContainer: {
+    position: 'absolute',
+    top: 50,
+    width: width - 20,
     alignSelf: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-    flexDirection: 'row',
-    gap: 25
+    zIndex: 10,
   },
-  button: {
-    backgroundColor: 'lightgrey',
-    padding: 5,
+  searchBox: {
+    flex: 1,
+  },
+  searchInput: {
+    height: 44,
     borderRadius: 8,
-  },
-  noHikesText: {
+    backgroundColor: 'white',
+    paddingHorizontal: 10,
     fontSize: 16,
   },
   clearIconContainer: {

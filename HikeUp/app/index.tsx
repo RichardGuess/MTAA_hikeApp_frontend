@@ -1,31 +1,7 @@
-// import auth from "@react-native-firebase/auth";
-// import { useEffect, useState } from "react";
-// import { router, Slot } from "expo-router";
-
-// export default function HomeScreen() {
-//   const [initializing, setInitializing] = useState(true);
-
-//   useEffect(() => {
-//     const unsubscribe = auth().onAuthStateChanged(async (user) => {
-//       if (user) {
-//         router.replace("/home");
-//       } else {
-//         router.replace("/auth");
-//       }
-//       if (initializing) setInitializing(false);
-//     });
-
-//     return unsubscribe;
-//   }, []);
-
-//   if (initializing) return null;
-
-//   return <Slot />;
-// }
-
-import { useEffect, useState } from "react";
+import 'react-native-get-random-values';
 import auth from "@react-native-firebase/auth";
 import { router } from "expo-router";
+import { useEffect, useState } from 'react';
 
 export default function Index() {
   const [initializing, setInitializing] = useState(true);
