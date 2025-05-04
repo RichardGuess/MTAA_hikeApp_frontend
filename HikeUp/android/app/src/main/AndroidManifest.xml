@@ -26,7 +26,6 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
         <data android:scheme="com.xgersr.HikeUp"/>
-        <data android:scheme="exp+hikeup"/>
       </intent-filter>
     </activity>
   </application>

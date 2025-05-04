@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import auth from "@react-native-firebase/auth";
 import NetInfo from '@react-native-community/netinfo';
-import { LOCAL_IP } from "./constants";
+import { LOCAL_IP } from "../assets/constants";
 
 import { 
   GoogleSignin,
@@ -19,10 +19,6 @@ export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
-  // const LOCAL_IP = "http://192.168.50.43:5433";
-  // const LOCAL_IP = "http://192.168.1.58:5433";
-  // const LOCAL_IP = "http://147.175.162.57:5433";
-  // const LOCAL_IP = "http://172.20.10.2:5433";
 
   const getNetworkInfo = async () => {
     const info = await NetInfo.fetch();
@@ -98,7 +94,8 @@ export default function AuthScreen() {
       // await AsyncStorage.setItem("token", token);
       console.log("Login successful, navigating to /home");
       await AsyncStorage.setItem("token", token);
-  
+      router.push('/home');
+      
     } catch (error: any) {
       console.error("Google Auth Error:", error);
       Alert.alert("Google Sign-in failed", error.message || "Unknown error");
@@ -147,6 +144,7 @@ export default function AuthScreen() {
       // await AsyncStorage.setItem("token", idToken);
       Alert.alert("Success", isSignUp ? `Account created for ${email}` : `Welcome back, ${email}`);
       await AsyncStorage.setItem("token", idToken);
+      router.push('/home');
   
     } catch (error: any) {
       console.error("Auth error:", error);

@@ -1,19 +1,15 @@
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import { View, Text, StyleSheet, FlatList, Button, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
 import { useEffect, useState } from "react";
-import { LOCAL_IP } from "./constants";
+import { LOCAL_IP } from '../../assets/constants';
+import HikeView from '../../components/hike-view'
+
 
 export default function HomeScreen() {
   const [token, setToken] = useState<string | null>(null);
   const [hikes, setHikes] = useState<any[]>([]);
-  // const LOCAL_IP = "http://192.168.50.43:5433";
-  // const LOCAL_IP = "http://147.175.162.57:5433";
-  // const LOCAL_IP = "http://192.168.1.58:5433";
-  // const LOCAL_IP = "http://172.20.10.2:5433";
-
-
   useEffect(() => {
     const getToken = async () => {
       const storedToken = await AsyncStorage.getItem("token");
@@ -22,6 +18,41 @@ export default function HomeScreen() {
 
     getToken();
   }, []);
+
+  // Define Hike interface for better type safety
+  interface Hike {
+    id: string | number;
+    name: string;
+    nickname: string;
+    created_at: string;
+    // Add other properties as needed
+  }
+
+  const handleHikePress = (hike: Hike) => {
+    // Navigate to hike details page or perform other actions
+    router.push({
+      pathname: '/hike',
+      params: {
+        id: hike.id.toString(),  // Pass id as string
+        editable: 'false'
+      }  
+    });  
+  };
+
+  const handleDeletePress = () => {
+    console.log('delete pressed');
+  }
+  const handleAddPress = () => {
+    router.push({
+      pathname: "/hike",
+      params: {
+        editable: "true"
+      }
+    });
+  };
+  const handleFilterPress = () => {
+    console.log('filter pressed');
+  }
 
   useEffect(() => {
     const getHikes = async () => {
@@ -64,29 +95,52 @@ export default function HomeScreen() {
           data={hikes}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View style={styles.hikeItem}>
-              <Text>Name: {item.name}</Text>
-              <Text>Nickname: {item.nickname}</Text>
-              <Text>Created At: {new Date(item.created_at).toLocaleString()}</Text>
-            </View>
+            <HikeView hike={item} onPress={handleHikePress}/>
           )}
         />
       )}
+      <View style={styles.custom}>
+        <TouchableOpacity style={styles.button} onPress={handleDeletePress}>
+          <Text style={{fontSize: 20}}>Delete</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleAddPress}>
+          <Text style={{fontSize: 20}}>Add</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleFilterPress}>
+          <Text style={{fontSize: 20}}>Filter</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    display: 'flex',
+    justifyContent: 'center',
     flex: 1,
     paddingTop: 50,
     paddingHorizontal: 16,
     backgroundColor: "#f2f2f2",
+
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 12,
+  },
+  custom: {
+    display: 'flex',
+    alignSelf: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    flexDirection: 'row',
+    gap: 25
+  },
+  button: {
+    backgroundColor: 'lightgrey',
+    padding: 5,
+    borderRadius: 8,
   },
   noHikesText: {
     fontSize: 16,
