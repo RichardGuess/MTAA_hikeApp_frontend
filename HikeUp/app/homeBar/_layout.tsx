@@ -18,7 +18,7 @@ export default function HomeTabsLayout() {
 
           return null;
         },
-        headerShown: false,
+        headerShown: true,
         tabBarActiveTintColor: "tomato",
         tabBarInactiveTintColor: "gray",
       })}

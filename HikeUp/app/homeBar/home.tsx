@@ -2,38 +2,138 @@ import { View, Text, StyleSheet, FlatList, Button, TouchableOpacity } from "reac
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LOCAL_IP } from '../../assets/constants';
-import HikeView from '../../components/hike-view'
-
+import HikeView from '../../components/hike-view';
+import NetInfo from '@react-native-community/netinfo';
+import { showMessage } from "react-native-flash-message";
+import { Hike } from '../../types/hike'
 
 export default function HomeScreen() {
-  const [token, setToken] = useState<string | null>(null);
   const [hikes, setHikes] = useState<any[]>([]);
-  useEffect(() => {
-    const getToken = async () => {
-      const storedToken = await AsyncStorage.getItem("token");
-      setToken(storedToken);
-    };
+  const [isOnline, setIsOnline] = useState(true);  // Track network status
+  const wasOffline = useRef(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-    getToken();
+  // Function to get hikes from AsyncStorage when offline
+  const getOfflineHikes = async () => {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const hikeKeys = keys.filter((key) => key.startsWith("hike-"));
+      const hikeData = await AsyncStorage.multiGet(hikeKeys);
+      const loadedHikes = hikeData
+        .map(([_, value]) => {
+          try {
+            return value ? JSON.parse(value) : null;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean); // remove nulls
+  
+      setHikes(loadedHikes);
+      console.log("Loaded hikes from AsyncStorage:", loadedHikes);
+    } catch (error) {
+      console.error("Failed to load hikes from AsyncStorage:", error);
+    }
+  };
+
+  // Function to get hikes from the backend
+  const getHikes = async () => {
+    try {
+      setRefreshing(true);
+      const currentUser = auth().currentUser;
+      if (!currentUser) throw new Error("No authenticated user");
+
+      const freshToken = await currentUser.getIdToken(true);
+
+      const res = await fetch(`${LOCAL_IP}/api/hikes/from-user`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${freshToken}`,
+        },
+      });
+
+      console.log('Fetching hikes...');
+      if (!res.ok) {
+        throw new Error("Failed to fetch hikes");
+      }
+
+      const data = await res.json();
+      console.log("Hikes:", data);
+      setHikes(data);
+    } catch (error) {
+      console.error("Error fetching hikes:", error);
+      setIsOnline(false); 
+      await getOfflineHikes();  // fallback to offline data
+      showMessage({
+        message: "You're offline",
+        description: "Loaded hikes from local storage.",
+        type: "warning", // 'success', 'info', 'danger', etc.
+        icon: "warning",
+      });
+    } finally {
+      setRefreshing(false); // hide spinner
+    }
+  };
+
+  //Fetching hike details
+  const fetchHikeDetails = async (HikeId : number | string) => {
+    try {
+      const firebaseToken = await auth().currentUser?.getIdToken();
+      const response = await fetch(
+        `${LOCAL_IP}/api/hikes/from-user-detail?hikeId=${HikeId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${firebaseToken}`,
+          },
+        }
+      );
+      const result = await response.json();
+      result.created_at = new Date(result.created_at);
+      console.log("fetched data", result);
+      return result;
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Initial check on mount
+    NetInfo.fetch().then(state => {
+      const isConnected = state.isConnected ?? false;  // Default to false if null
+      setIsOnline(isConnected);  // Set the network status
+      if (state.isConnected) {
+        getHikes(); // initial fetch
+      } else { 
+        getOfflineHikes();  // load from AsyncStorage if offline
+      }
+      wasOffline.current = !state.isConnected;
+    });
+
+    // Listener for network status changes
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const isConnected = state.isConnected ?? false;  // Default to false if null
+      setIsOnline(isConnected);  // Update the network status
+      if (state.isConnected && wasOffline.current) {
+        getHikes(); // fetch when coming back online
+      }
+      wasOffline.current = !state.isConnected;
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
-  // Define Hike interface for better type safety
-  interface Hike {
-    id: string | number;
-    name: string;
-    nickname: string;
-    created_at: string;
-    // Add other properties as needed
-  }
-
   const handleHikePress = (hike: Hike) => {
-    // Navigate to hike details page or perform other actions
     router.push({
       pathname: '/hike',
       params: {
-        id: hike.id.toString(),  // Pass id as string
+        id: hike.id.toString(),
         editable: 'false'
       }  
     });  
@@ -41,7 +141,7 @@ export default function HomeScreen() {
 
   const handleDeletePress = () => {
     console.log('delete pressed');
-  }
+  };
   const handleAddPress = () => {
     router.push({
       pathname: "/hike",
@@ -50,40 +150,35 @@ export default function HomeScreen() {
       }
     });
   };
+
   const handleFilterPress = () => {
     console.log('filter pressed');
-  }
+  };
 
-  useEffect(() => {
-    const getHikes = async () => {
-      try {
-        const currentUser = auth().currentUser;
-        if (!currentUser) throw new Error("No authenticated user");
-
-        const freshToken = await currentUser.getIdToken(true);
-
-        const res = await fetch(`${LOCAL_IP}/api/hikes/from-user`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${freshToken}`,
-          },
-        });
-        console.log('fetching');
-        if (!res.ok) {
-          throw new Error("Failed to fetch hikes");
-        }
-
-        const data = await res.json();
-        console.log("Hikes:", data);
-        setHikes(data);
-      } catch (error) {
-        console.error("Error fetching hikes:", error);
-      }
-    };
-
-    getHikes();
-  }, []);
+  const handleDownloadPress = async (hike: Hike) => {
+    try {
+      const detailedHike = await fetchHikeDetails(hike.id);
+      await AsyncStorage.setItem(
+        `hike-${hike.id}`,
+        JSON.stringify(detailedHike)
+      );
+      console.log(`Hike ${hike.id} saved to AsyncStorage.`);
+      showMessage({
+        message: "Downloaded",
+        description: "Hike saved for offline use.",
+        type: "success",
+        icon: "success",
+      });
+    } catch (error) {
+      console.error("Error saving hike to AsyncStorage:", error);
+      showMessage({
+        message: "Error",
+        description: "Could not download hike details.",
+        type: "danger",
+        icon: "danger",
+      });
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -95,8 +190,15 @@ export default function HomeScreen() {
           data={hikes}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <HikeView hike={item} onPress={handleHikePress}/>
+            <HikeView 
+              hike={item} 
+              onPress={handleHikePress} 
+              onDownload={handleDownloadPress} 
+              isOnline={isOnline}
+            />
           )}
+          refreshing={refreshing}
+          onRefresh={getHikes}
         />
       )}
       <View style={styles.custom}>
@@ -122,7 +224,6 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingHorizontal: 16,
     backgroundColor: "#f2f2f2",
-
   },
   title: {
     fontSize: 20,

@@ -1,22 +1,11 @@
-import { View, Text, StyleSheet, TextInput, Button, GestureResponderEvent, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, GestureResponderEvent, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
+import { Hike } from '../types/hike';
 
 type hikeSpecsProps = {
-    hike: HikeInfo | null;
+    hike: Hike | null;
     editable: boolean;
-};
-
-type HikeInfo = {
-    id: number;
-    created_at: Date;
-    start_point: number | null;
-    dest_point: number | null;
-    distance: number | null;
-    geom: Geolocation | null;
-    calories: number | null;
-    user_id: number;
-    name: string | null;
 };
 
 export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
@@ -34,7 +23,7 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
     }
 
     return (
-        <View style={{ flex:1, justifyContent: 'space-between' }}>
+        <View style={{ flex:1, justifyContent: 'space-between', paddingTop: 100}}>
             <View style={styles.container}>
                 <View style={styles.row}>
                     <Text style={styles.label}>Name:</Text>
@@ -54,7 +43,9 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                     ) : (
                         <>
                             <Text style={styles.label}>Created:</Text>
-                            <Text style={styles.value}>{hike?.created_at?.toLocaleDateString()}</Text>
+                            <Text style={styles.value}>
+                                {hike?.created_at ? new Date(hike.created_at).toLocaleDateString() : ""}
+                            </Text>                        
                         </>                
                     )}
                 </View>

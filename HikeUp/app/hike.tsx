@@ -6,12 +6,14 @@ import auth from "@react-native-firebase/auth";
 
 import { LOCAL_IP } from "../assets/constants";
 import HikeSpecs from "../components/hike-detail";
+import { Hike } from "../types/hike";
+import { showMessage } from "react-native-flash-message";
 
 export default function HikeDetail() {
   const { id, editable } = useLocalSearchParams<{ id?: string; editable?: string }>();
-  const [token, setToken] = useState<string | null>(null);
-  const [data, setData] = useState<any>(null); // You can improve type here if needed
+  const [data, setData] = useState<Hike | null>(null);
   const [canEdit, setCanEdit] = useState<boolean>(false);
+
 
   // Convert editable string param to boolean
   useEffect(() => {
@@ -19,16 +21,6 @@ export default function HikeDetail() {
       setCanEdit(editable === "true");
     }
   }, [editable]);
-
-  
-  // Get token from AsyncStorage (optional, you're using Firebase token below anyway)
-  useEffect(() => {
-    const getToken = async () => {
-      const storedToken = await AsyncStorage.getItem("token");
-      setToken(storedToken);
-    };
-    getToken();
-  }, []);
 
   // Fetch hike detail when `id` changes
   useEffect(() => {
@@ -39,6 +31,20 @@ export default function HikeDetail() {
     }
   }, [id]);
 
+  const getOfflineHikes = async () => {
+    try {
+      const value = await AsyncStorage.getItem(`hike-${id}`);
+      if (value) {
+        const parsed = JSON.parse(value);
+        parsed.created_at = new Date(parsed.created_at);
+        setData(parsed);
+      } else {
+        console.warn("No hike found for ID", id);
+      }
+    } catch (error) {
+      console.error("Failed to load hike from AsyncStorage:", error);
+    }
+  };
   const fetchData = async () => {
     try {
       const firebaseToken = await auth().currentUser?.getIdToken();
@@ -57,6 +63,7 @@ export default function HikeDetail() {
       setData(result);
       console.log("fetched data", result);
     } catch (error) {
+      await getOfflineHikes();
       console.error("Error fetching data:", error);
     }
   };

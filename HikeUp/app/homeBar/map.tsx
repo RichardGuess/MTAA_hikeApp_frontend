@@ -178,11 +178,13 @@ export default function MapScreen() {
         onRegionChangeComplete={setRegion}
         onPress={onMapPress}
       >
-        <Polyline
-          coordinates={routeCoords.length > 0 ? routeCoords : points}
-          strokeColor="blue"
-          strokeWidth={4}
-        />
+        {(routeCoords.length > 0 || points.length > 0) && (
+          <Polyline
+            coordinates={routeCoords.length > 0 ? routeCoords : points}
+            strokeColor="blue"
+            strokeWidth={4}
+          />
+        )}
         {points.map((point, index) => (
           <Marker key={index} coordinate={point} />
         ))}
@@ -210,6 +212,9 @@ export default function MapScreen() {
           styles={{
             textInput: styles.searchInput,
             container: styles.searchBox,
+          }}
+          textInputProps={{
+            placeholderTextColor: 'black'
           }}
           renderRightButton={() => (
             <TouchableOpacity
