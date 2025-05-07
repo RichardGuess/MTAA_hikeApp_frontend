@@ -18,12 +18,19 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
     const params = useLocalSearchParams();
     const id = Number(params.id);
 
+    
+
     function handleCreateHikePress(event: GestureResponderEvent): void {
         throw new Error('Function not implemented.');
     }
 
     return (
         <View style={{ flex:1, justifyContent: 'space-between', paddingTop: 100}}>
+            {/* EDIT button */}
+            <TouchableOpacity onPress={()=> (!editable)}style={{ alignSelf: 'flex-end', marginBottom: 20 }}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#007AFF' }}>EDIT</Text>
+            </TouchableOpacity>
+
             <View style={styles.container}>
                 <View style={styles.row}>
                     <Text style={styles.label}>Name:</Text>
@@ -103,9 +110,13 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                 </View>
             </View>
             <View style={styles.buttonContainer}>
+                {editable ? (
                 <TouchableOpacity style={styles.button} onPress={handleCreateHikePress}>
                     <Text style={styles.buttonText}>create hike</Text>
                 </TouchableOpacity>
+                ) : (
+                <View style={{ flex: 1 }} />
+                )}
             </View>
         </View>
     );

@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { LOCAL_IP } from '../../assets/constants';
 import HikeView from '../../components/hike-view';
 import NetInfo from '@react-native-community/netinfo';
-import { showMessage } from "react-native-flash-message";
+import { showMessage, hideMessage } from "react-native-flash-message";
 import { Hike } from '../../types/hike'
 
 export default function HomeScreen() {
@@ -186,11 +186,19 @@ export default function HomeScreen() {
   };
 
   const handleDeletePress = () => {
+    if (!deleteMode) {
+      showMessage({
+        message: "You can tap a hike to delete it",
+        titleStyle: {textAlign: 'center'},
+        type: "info",
+        autoHide: false, // stays visible
+        hideOnPress: false
+      });
+    } else {
+      hideMessage();
+    }
+  
     setDeleteMode(prev => !prev);
-    showMessage({
-      message: deleteMode ? "Exited delete mode" : "Tap a hike to delete it",
-      type: "info",
-    });
   };
 
   const handleAddPress = () => {
