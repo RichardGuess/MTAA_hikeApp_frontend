@@ -22,13 +22,27 @@ export default function HikeDetail() {
     }
   }, [editable]);
 
-  // Fetch hike detail when `id` changes
+  // Fetch hike detail when `id` changes, retry once if fetch failed
   useEffect(() => {
-    if (id) {
-      fetchData();
-    }else{
-      console.log(data,canEdit);
-    }
+    let retryTimeout: NodeJS.Timeout;
+
+    const tryFetch = async () => {
+      if (!id) return;
+
+      await fetchData();
+
+      // Retry if data is still null after 1000ms
+      if (!data) {
+        retryTimeout = setTimeout(() => {
+          console.log("Retrying fetchData...");
+          fetchData();
+        }, 1000);
+      }
+    };
+
+    tryFetch();
+
+    return () => clearTimeout(retryTimeout);
   }, [id]);
 
   const getOfflineHikes = async () => {
@@ -70,7 +84,7 @@ export default function HikeDetail() {
 
   return (
     <View style={{ flex: 1, padding: 16 }}>
-      {(data && canEdit === false) || (!data && canEdit === true) ? (
+      {data ? (
         <HikeSpecs hike={data} editable={canEdit} />
       ) : (
         <Text>Loading hike details...</Text>
