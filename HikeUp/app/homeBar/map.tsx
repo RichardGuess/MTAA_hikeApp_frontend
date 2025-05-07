@@ -130,6 +130,7 @@ export default function MapScreen() {
         latitude: pt.latitude,
         longitude: pt.longitude,
         order_number: index + 1,
+        name: index === 0 ? 'start' : 'end',
       }));
 
       const wpRes = await fetch(`${LOCAL_IP}/api/mapbox/waypoints`, {

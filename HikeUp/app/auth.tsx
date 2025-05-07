@@ -49,26 +49,36 @@ export default function AuthScreen() {
 
   const handleGoogleAuth = async () => {
     try {
+      console.log("Checking Play Services");
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
   
       // clear any stale session to avoid stale token issues
+      console.log("Signing out old session");
       await GoogleSignin.signOut();
   
+      console.log("Signing in");
       const user = await GoogleSignin.signIn(); // always sign in fresh
+      console.log("Google user:", user);
       if (!user) throw new Error("Google sign-in failed");
       const tokens = await GoogleSignin.getTokens();
+      console.log("Tokens:", tokens);
       const idToken = tokens.idToken;
   
       if (!idToken) throw new Error("No ID token returned from Google");
   
+      console.log("Creating Firebase credential");
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
       const userCredential = await auth().signInWithCredential(googleCredential);
-  
+      console.log("Firebase user credential:", userCredential);
+
       const firebaseUser = userCredential.user;
       const token = await firebaseUser.getIdToken();
+      console.log("Firebase ID token:", token);
   
       // check if user already exists in Firebase Auth
+      console.log("Checking sign-in methods for:", firebaseUser.email);
       const methods = await auth().fetchSignInMethodsForEmail(firebaseUser.email!);
+      console.log("Sign-in methods:", methods);
   
       if (methods.length === 0) {
         // send data to your backend to create user
