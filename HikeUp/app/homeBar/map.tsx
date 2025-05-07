@@ -5,6 +5,7 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
 import { GOOGLE_MAPS_API, LOCAL_IP } from '../../assets/constants';
+import { router } from "expo-router";
 
 const { width } = Dimensions.get('window');
 
@@ -153,6 +154,17 @@ export default function MapScreen() {
       setPoints([]);
       setRouteCoords([]);
       Alert.alert('Success', 'Hike and waypoints created.');
+      // wait before navigating to avoid race condition
+      setTimeout(() => {
+        router.push({
+          pathname: '/hike',
+          params: {
+            id: hikeId.toString(),
+            editable: 'true'
+          }
+        });
+      }, 1000);
+    
     } catch (err: any) {
       Alert.alert('Error', err.message);
     }

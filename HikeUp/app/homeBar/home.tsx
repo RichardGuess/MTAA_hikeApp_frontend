@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, FlatList, Button, TouchableOpacity } from "react-native";
-import { router } from "expo-router";
+import { View, Text, StyleSheet, FlatList, Button, TouchableOpacity, Alert } from "react-native";
+import { router, useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { LOCAL_IP } from '../../assets/constants';
 import HikeView from '../../components/hike-view';
 import NetInfo from '@react-native-community/netinfo';
@@ -14,6 +14,7 @@ export default function HomeScreen() {
   const [isOnline, setIsOnline] = useState(true);  // Track network status
   const wasOffline = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [deleteMode, setDeleteMode] = useState(false);  // Track delete mode
 
   // Function to get hikes from AsyncStorage when offline
   const getOfflineHikes = async () => {
@@ -30,7 +31,7 @@ export default function HomeScreen() {
           }
         })
         .filter(Boolean); // remove nulls
-  
+
       setHikes(loadedHikes);
       console.log("Loaded hikes from AsyncStorage:", loadedHikes);
     } catch (error) {
@@ -129,19 +130,69 @@ export default function HomeScreen() {
     };
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      getHikes();
+    }, [])
+  );
+
   const handleHikePress = (hike: Hike) => {
-    router.push({
-      pathname: '/hike',
-      params: {
-        id: hike.id.toString(),
-        editable: 'false'
-      }  
-    });  
+    if (deleteMode) {
+      Alert.alert(
+        "Delete Hike",
+        `Are you sure you want to delete \"${hike.name}\"?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                const token = await auth().currentUser?.getIdToken();
+                const res = await fetch(`${LOCAL_IP}/api/hikes/delete?hike_id=${hike.id}`, {
+                  method: "DELETE",
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (!res.ok) throw new Error("Deletion failed");
+
+                showMessage({
+                  message: "Hike deleted",
+                  type: "success",
+                });
+
+                await getHikes();
+                setDeleteMode(false);
+              } catch (err) {
+                console.error("Delete error:", err);
+                showMessage({
+                  message: "Error deleting hike",
+                  type: "danger",
+                });
+              }
+            }
+          }
+        ]
+      );
+    } else {
+      router.push({
+        pathname: '/hike',
+        params: {
+          id: hike.id.toString(),
+          editable: 'false'
+        }  
+      });
+    }
   };
 
   const handleDeletePress = () => {
-    console.log('delete pressed');
+    setDeleteMode(prev => !prev);
+    showMessage({
+      message: deleteMode ? "Exited delete mode" : "Tap a hike to delete it",
+      type: "info",
+    });
   };
+
   const handleAddPress = () => {
     router.push({
       pathname: "/hike",
