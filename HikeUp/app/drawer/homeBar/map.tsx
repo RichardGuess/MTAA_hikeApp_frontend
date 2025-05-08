@@ -4,7 +4,7 @@ import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
-import { GOOGLE_MAPS_API, LOCAL_IP } from '../../assets/constants';
+import { GOOGLE_MAPS_API, LOCAL_IP } from '../../../assets/constants';
 import { router } from "expo-router";
 
 const { width } = Dimensions.get('window');
@@ -157,7 +157,7 @@ export default function MapScreen() {
       // wait before navigating to avoid race condition
       setTimeout(() => {
         router.push({
-          pathname: '/hike',
+          pathname: '../hike',
           params: {
             id: hikeId.toString(),
             editable: 'true'

@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
 
-import { LOCAL_IP } from "../assets/constants";
-import HikeSpecs from "../components/hike-detail";
-import { Hike } from "../types/hike";
+import { LOCAL_IP } from "../../assets/constants";
+import HikeSpecs from "../../components/hike-detail";
+import { Hike } from "../../types/hike";
 import { showMessage } from "react-native-flash-message";
 
 export default function HikeDetail() {
