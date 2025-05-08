@@ -1,9 +1,9 @@
 import { View, Text } from "react-native";
 
-export default function FriendScreen() {
+export default function GroupsScreen() {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Friends Screen</Text>
+      <Text>Group Chats</Text>
     </View>
   );
 }

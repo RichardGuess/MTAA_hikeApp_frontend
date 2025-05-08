@@ -10,7 +10,7 @@ export default function HomeTabsLayout() {
           if (route.name === "home") {
             const iconName = focused ? "home" : "home-outline";
             return <Ionicons name={iconName} size={size} color={color} />;
-          } else if (route.name === "friends") {
+          } else if (route.name === "Friends") {
             return <FontAwesome5 name="user-friends" size={size} color={color} solid={focused} />;
           } else if (route.name === "map") {
             return <Ionicons name="map" size={size} color={color} />;
@@ -25,7 +25,7 @@ export default function HomeTabsLayout() {
     >
       <Tabs.Screen name="home" options={{ title: "Home" }} />
       <Tabs.Screen name="map" options={{ title: "Map" }} />
-      <Tabs.Screen name="friends" options={{ title: "Friends" }} />
+      <Tabs.Screen name="Friends" options={{ title: "Friends",tabBarLabel: "Friends" }} />
     </Tabs>
   );
 }
