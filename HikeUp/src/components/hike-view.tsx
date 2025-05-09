@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Touchable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { Hike } from '../../types/hike'
+import { Hike } from '../types/hike'
 
 interface HikeViewProps {
   hike: Hike;
