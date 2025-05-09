@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
 import { GOOGLE_MAPS_API, LOCAL_IP } from '../../../assets/constants';
 import { router } from "expo-router";
-import { useThemeContext } from '../../theme_context';
+import { useThemeContext } from '../../../context/theme_context';
 
 const { width } = Dimensions.get('window');
 

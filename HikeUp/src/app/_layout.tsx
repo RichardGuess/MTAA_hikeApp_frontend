@@ -1,6 +1,6 @@
 // app/_layout.tsx
 import { Stack } from "expo-router";
-import { ThemeProvider } from "./theme_context";
+import { ThemeProvider } from "../context/theme_context";
 import FlashMessage from "react-native-flash-message";
 
 export default function RootLayout() {

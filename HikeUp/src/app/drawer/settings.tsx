@@ -1,5 +1,5 @@
 import { View, Text, Switch, StyleSheet, Platform } from "react-native";
-import { useThemeContext } from "../theme_context";
+import { useThemeContext } from "../../context/theme_context";
 import { useTheme } from "@react-navigation/native";
 import { useEffect, useState } from 'react';
 

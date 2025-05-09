@@ -4,23 +4,29 @@ import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
 
-import { LOCAL_IP } from "../../assets/constants";
-import HikeSpecs from "../../components/hike-detail";
-import { Hike } from "../../types/hike";
+import { LOCAL_IP } from "../../../assets/constants";
+import HikeSpecs from '../../../components/hikeNew'
+import HikeDetail from "../../../components/hikeDetail";
+
+import { Hike } from "../../../types/hike";
 import { showMessage } from "react-native-flash-message";
 
-export default function HikeDetail() {
-  const { id, editable } = useLocalSearchParams<{ id?: string; editable?: string }>();
+type Mode = 'add' | 'view';
+
+
+export default function HikeScreen() {
+  const { id, mode: urlMode } = useLocalSearchParams<{ id?: string; mode: string }>();
   const [data, setData] = useState<Hike | null>(null);
-  const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [mode, setMode] = useState<Mode>('view');
+  const [canEdit, setCanEdit] = useState(false);
 
-
-  // Convert editable string param to boolean
   useEffect(() => {
-    if (editable !== undefined) {
-      setCanEdit(editable === "true");
+    if (urlMode === 'add' || urlMode === 'view') {
+      setMode(urlMode);
+    } else {
+      setMode('view'); 
     }
-  }, [editable]);
+  }, [urlMode]);
 
   // Fetch hike detail when `id` changes, retry once if fetch failed
   useEffect(() => {
@@ -84,8 +90,10 @@ export default function HikeDetail() {
 
   return (
     <View style={{ flex: 1, padding: 16 }}>
-      {data ? (
-        <HikeSpecs hike={data} editable={canEdit} />
+      { (mode === "add")?(
+        <HikeSpecs hike={data} />
+      ) : (mode === 'view') ? (
+        <HikeDetail hike={data} editable={canEdit} />
       ) : (
         <Text>Loading hike details...</Text>
       )}

@@ -66,7 +66,7 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                             keyboardType="numeric"
                         />
                     ) : (
-                        <Text style={styles.value}>{hike?.start_point}</Text>
+                        <Text style={styles.value}>{hike?.start_point ? hike.start_point.toString() : ''}</Text>
                     )}
                 </View>
                 <View style={styles.row}>
@@ -79,7 +79,7 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                             keyboardType="numeric"
                         />
                     ) : (
-                        <Text style={styles.value}>{hike?.dest_point}</Text>
+                        <Text style={styles.value}>{hike?.dest_point ? hike.dest_point.toString() : ''}</Text>
                     )}
                 </View>
                 <View style={styles.row}>

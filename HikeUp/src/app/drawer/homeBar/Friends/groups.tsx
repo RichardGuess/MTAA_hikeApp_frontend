@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View, Text, StyleSheet } from "react-native";
-import { useThemeContext } from '../../../theme_context';
+import { useThemeContext } from '../../../../context/theme_context';
 
 export default function GroupsScreen() {
   const { theme } = useThemeContext();

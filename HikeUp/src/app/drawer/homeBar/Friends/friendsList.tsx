@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, ActivityIndicator, Image, StyleSheet } from "react-native";
 import auth from "@react-native-firebase/auth";
 import { LOCAL_IP } from "../../../../assets/constants";
-import { useThemeContext } from "../../../theme_context";
+import { useThemeContext } from "../../../../context/theme_context";
 
 type Friend = {
   id: number;

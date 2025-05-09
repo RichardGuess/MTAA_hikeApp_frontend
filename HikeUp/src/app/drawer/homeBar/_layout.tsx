@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useThemeContext } from "../../theme_context";
+import { useThemeContext } from "../../../context/theme_context";
 
 export default function HomeTabsLayout() {
   const { theme } = useThemeContext();

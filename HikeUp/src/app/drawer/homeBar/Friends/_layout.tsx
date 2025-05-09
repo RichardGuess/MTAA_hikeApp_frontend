@@ -1,7 +1,7 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { withLayoutContext } from 'expo-router';
 import { StyleSheet, Platform, View } from 'react-native';
-import { useThemeContext } from '../../../theme_context';
+import { useThemeContext } from '../../../../context/theme_context';
 
 const { Navigator } = createMaterialTopTabNavigator();
 const TopTabs = withLayoutContext(Navigator);

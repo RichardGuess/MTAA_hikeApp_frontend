@@ -8,7 +8,7 @@ import HikeView from '../../../components/hike-view';
 import NetInfo from '@react-native-community/netinfo';
 import { showMessage, hideMessage } from "react-native-flash-message";
 import { Hike } from '../../../types/hike'
-import { useThemeContext } from "../../theme_context"; 
+import { useThemeContext } from "../../../context/theme_context"; 
 
 export default function HomeScreen() {
   const [hikes, setHikes] = useState<any[]>([]);

@@ -1,9 +1,11 @@
-import { createDrawerNavigator } from "@react-navigation/drawer";
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem  } from "@react-navigation/drawer";
 import { withLayoutContext } from "expo-router";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
-import { Text } from "react-native";
-import { useThemeContext } from '../theme_context';
-import { ThemeProvider } from '@react-navigation/native'
+import { Text, View } from "react-native";
+import { useThemeContext } from '../../context/theme_context';
+import { ThemeProvider } from '@react-navigation/native';
+import { router } from 'expo-router';
+import auth from '@react-native-firebase/auth';
 
 // Define the drawer navigator and connect it to expo-router
 const { Navigator } = createDrawerNavigator();
@@ -27,6 +29,24 @@ export default function DrawerLayout() {
                 },
                 headerTintColor: iconColor,
             }}
+            drawerContent={(props) => (
+                <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1 }}>
+                    <DrawerItemList {...props} />
+                    <View style={{ marginTop: 'auto' }}>
+                        <DrawerItem
+                            label="Logout"
+                            onPress={async () => {
+                                try {
+                                    await auth().signOut();
+                                    router.replace('/auth');
+                                } catch (e) {
+                                    console.error('logout failed:', e);
+                                }
+                            }}
+                        />
+                    </View>
+                </DrawerContentScrollView>
+            )}
             >
             <Drawer.Screen
                 name="map_redirect"
@@ -55,6 +75,7 @@ export default function DrawerLayout() {
             <Drawer.Screen name="homeBar" options={{ drawerItemStyle: { display: 'none' } }} />
             <Drawer.Screen name="hike" options={{ drawerItemStyle: { display: 'none' } }} />
             <Drawer.Screen name="flashMessage" options={{ drawerItemStyle: { display: 'none' } }} />
+            <Drawer.Screen name="logout" options={{ drawerItemStyle: { display: 'none' } }} />
             </Drawer>
         </ThemeProvider>
     );
