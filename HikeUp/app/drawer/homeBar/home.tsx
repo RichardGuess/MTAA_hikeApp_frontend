@@ -8,6 +8,7 @@ import HikeView from '../../../components/hike-view';
 import NetInfo from '@react-native-community/netinfo';
 import { showMessage, hideMessage } from "react-native-flash-message";
 import { Hike } from '../../../types/hike'
+import { useThemeContext } from "../../theme_context"; 
 
 export default function HomeScreen() {
   const [hikes, setHikes] = useState<any[]>([]);
@@ -15,6 +16,13 @@ export default function HomeScreen() {
   const wasOffline = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
   const [deleteMode, setDeleteMode] = useState(false);  // Track delete mode
+  const { theme } = useThemeContext();
+  const colors = theme.colors;
+  const styles = getStyles(colors);
+  
+  
+
+  console.log("Theme colors:", colors);
 
   // Function to get hikes from AsyncStorage when offline
   const getOfflineHikes = async () => {
@@ -275,45 +283,47 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    display: 'flex',
-    justifyContent: 'center',
-    flex: 1,
-    paddingTop: 50,
-    paddingHorizontal: 16,
-    backgroundColor: "#f2f2f2",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
-  },
-  custom: {
-    display: 'flex',
-    alignSelf: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-    flexDirection: 'row',
-    gap: 25
-  },
-  button: {
-    backgroundColor: 'lightgrey',
-    padding: 5,
-    borderRadius: 8,
-  },
-  noHikesText: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 20,
-    textAlign: "center",
-  },
-  hikeItem: {
-    padding: 12,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-});
+const getStyles = (colors: any) =>
+  StyleSheet.create({
+    container: {
+      display: 'flex',
+      justifyContent: 'center',
+      flex: 1,
+      paddingTop: 50,
+      paddingHorizontal: 16,
+      backgroundColor: colors.background, // dark/light aware
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "bold",
+      marginBottom: 12,
+      color: colors.text, // apply theme text color
+    },
+    custom: {
+      display: 'flex',
+      alignSelf: 'center',
+      alignItems: 'center',
+      marginBottom: 10,
+      flexDirection: 'row',
+      gap: 25
+    },
+    button: {
+      backgroundColor: colors.primary, // or colors.card / text if needed
+      padding: 5,
+      borderRadius: 8,
+    },
+    noHikesText: {
+      fontSize: 16,
+      color: colors.text,
+      marginTop: 20,
+      textAlign: "center",
+    },
+    hikeItem: {
+      padding: 12,
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+  });

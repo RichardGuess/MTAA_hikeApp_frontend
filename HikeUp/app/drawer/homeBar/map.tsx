@@ -6,10 +6,14 @@ import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
 import { GOOGLE_MAPS_API, LOCAL_IP } from '../../../assets/constants';
 import { router } from "expo-router";
+import { useThemeContext } from '../../theme_context';
 
 const { width } = Dimensions.get('window');
 
 export default function MapScreen() {
+  const { theme, isDark } = useThemeContext();
+  const colors = theme.colors;
+  const styles = getStyles(colors, isDark);
   const searchRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
 
@@ -21,6 +25,35 @@ export default function MapScreen() {
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   });
+
+  const darkMapStyle = [
+    { elementType: 'geometry', stylers: [{ color: '#212121' }] },
+    { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#212121' }] },
+    {
+      featureType: 'administrative',
+      elementType: 'geometry',
+      stylers: [{ color: '#757575' }]
+    },
+    {
+      featureType: 'poi',
+      elementType: 'geometry',
+      stylers: [{ color: '#181818' }]
+    },
+    {
+      featureType: 'road',
+      elementType: 'geometry',
+      stylers: [{ color: '#373737' }]
+    },
+    {
+      featureType: 'water',
+      elementType: 'geometry',
+      stylers: [{ color: '#000000' }]
+    }
+  ];
+  
+
 
   useEffect(() => {
     setPoints([]);
@@ -190,6 +223,7 @@ export default function MapScreen() {
         region={region}
         onRegionChangeComplete={setRegion}
         onPress={onMapPress}
+        customMapStyle={isDark ? darkMapStyle : []}
       >
         {(routeCoords.length > 0 || points.length > 0) && (
           <Polyline
@@ -202,8 +236,9 @@ export default function MapScreen() {
           <Marker key={index} coordinate={point} />
         ))}
       </MapView>
-
-      <View style={styles.searchContainer} pointerEvents="box-none">
+  
+      {/* Search Input */}
+      <View style={styles.searchContainer} pointerEvents="auto">
         <GooglePlacesAutocomplete
           ref={searchRef}
           placeholder="Search"
@@ -222,34 +257,38 @@ export default function MapScreen() {
             }
           }}
           query={{ key: GOOGLE_MAPS_API, language: 'en' }}
+          enablePoweredByContainer={false}
           styles={{
+            container: styles.searchBox, // affects outer container (dropdown positioning)
+            textInputContainer: styles.textInputContainer, // 🔧 affects actual touch area!
             textInput: styles.searchInput,
-            container: styles.searchBox,
           }}
           textInputProps={{
-            placeholderTextColor: 'black'
+            placeholderTextColor: colors.text,
+            style: [styles.searchInput, { color: colors.text }],
           }}
           renderRightButton={() => (
             <TouchableOpacity
               onPress={() => searchRef.current?.setAddressText('')}
               style={styles.clearIconContainer}
             >
-              <Ionicons name="close-circle" size={20} color="#888" />
+              <Ionicons name="close-circle" size={20} color={isDark ? "#ccc" : "#888"} />
             </TouchableOpacity>
           )}
         />
       </View>
-
+  
+      {/* Zoom + Clear Controls */}
       <View style={styles.controlsContainer} pointerEvents="box-none">
         <View style={styles.zoomControls}>
           <TouchableOpacity onPress={() => zoom(true)} style={styles.zoomButton}>
-            <Ionicons name="add" size={24} />
+            <Ionicons name="add" size={24} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => zoom(false)} style={styles.zoomButton}>
-            <Ionicons name="remove" size={24} />
+            <Ionicons name="remove" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
-
+  
         <TouchableOpacity
           onPress={() => {
             setPoints([]);
@@ -260,72 +299,96 @@ export default function MapScreen() {
           <Text style={{ color: 'white', fontSize: 12 }}>Clear</Text>
         </TouchableOpacity>
       </View>
-
+  
+      {/* Save Hike */}
       {points.length === 2 && (
         <TouchableOpacity onPress={createHike} style={styles.saveButton}>
           <Text style={{ color: 'white' }}>Create Hike</Text>
         </TouchableOpacity>
       )}
     </View>
-  );
+  );  
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  searchContainer: {
-    position: 'absolute',
-    top: 50,
-    width: width - 20,
-    alignSelf: 'center',
-    zIndex: 10,
-  },
-  searchBox: {
-    flex: 1,
-  },
-  searchInput: {
-    height: 44,
-    borderRadius: 8,
-    backgroundColor: 'white',
-    paddingHorizontal: 10,
-    fontSize: 16,
-  },
-  clearIconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-  },
-  controlsContainer: {
-    position: 'absolute',
-    bottom: 100,
-    right: 10,
-    alignItems: 'center',
-  },
-  zoomControls: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 5,
-    marginBottom: 10,
-  },
-  zoomButton: {
-    padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  clearButton: {
-    backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  saveButton: {
-    position: 'absolute',
-    bottom: 40,
-    left: 10,
-    backgroundColor: '#2196F3',
-    padding: 10,
-    borderRadius: 8,
-  },
-});
+const getStyles = (colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    container: { flex: 1 },
+    searchContainer: {
+      position: 'absolute',
+      top: 50,  
+      width: width - 20,
+      alignSelf: 'center',
+      zIndex: 9999,
+      elevation: 20,
+      pointerEvents: 'auto',
+    },    
+    searchBox: {
+      width: width - 20, // explicitly match container
+      alignSelf: 'center',
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      borderColor: isDark ? "#444" : "#ccc",
+      borderWidth: 1,
+      overflow: 'hidden',
+    },    
+    searchInput: {
+      flex: 1,
+      height: 41,
+      borderRadius: 8,
+      backgroundColor: colors.card,
+      paddingHorizontal: 10,
+      fontSize: 16,
+      color: colors.text,
+    },
+    textInputContainer: {
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      borderColor: isDark ? "#444" : "#ccc",
+      borderWidth: 1,
+      paddingHorizontal: 0,
+      marginBottom: 0,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+    },
+    clearIconContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+    },
+    controlsContainer: {
+      position: 'absolute',
+      bottom: 100,
+      right: 10,
+      alignItems: 'center',
+    },
+    zoomControls: {
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      elevation: 5,
+      marginBottom: 10,
+    },
+    zoomButton: {
+      padding: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    clearButton: {
+      backgroundColor: isDark ? '#ff6b6b' : '#f44336',
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+    },
+    saveButton: {
+      position: 'absolute',
+      bottom: 40,
+      left: 10,
+      backgroundColor: '#2196F3',
+      padding: 10,
+      borderRadius: 8,
+    },
+  });
 
 type LatLng = {
   latitude: number;
