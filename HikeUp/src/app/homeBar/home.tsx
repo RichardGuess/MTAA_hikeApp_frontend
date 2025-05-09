@@ -3,11 +3,11 @@ import { router, useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { LOCAL_IP } from '../assets/constants';
+import { LOCAL_IP } from '../../assets/constants';
 import HikeView from '../components/hike-view';
 import NetInfo from '@react-native-community/netinfo';
 import { showMessage, hideMessage } from "react-native-flash-message";
-import { Hike } from '../types/hike'
+import { Hike } from '../../types/hike'
 
 export default function HomeScreen() {
   const [hikes, setHikes] = useState<any[]>([]);

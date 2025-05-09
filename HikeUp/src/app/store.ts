@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Hike } from './types/hike';
+import { Hike } from '../types/hike';
 
 // Define the type for location coordinates
 export type LatLng = {

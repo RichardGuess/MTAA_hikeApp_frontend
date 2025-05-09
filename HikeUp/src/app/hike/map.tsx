@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Alert } from 'rea
 import MapView, { MapPressEvent, Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Ionicons } from '@expo/vector-icons';
-import { GOOGLE_MAPS_API, LOCAL_IP } from '../assets/constants';
+import { GOOGLE_MAPS_API, LOCAL_IP } from '../../assets/constants';
 import { router, useLocalSearchParams } from "expo-router";
 import { useHikeStore, formatCoordinates, parseCoordinates, LatLng } from '../store';
 
