@@ -76,6 +76,7 @@ export default function DrawerLayout() {
             <Drawer.Screen name="hike" options={{ drawerItemStyle: { display: 'none' } }} />
             <Drawer.Screen name="flashMessage" options={{ drawerItemStyle: { display: 'none' } }} />
             <Drawer.Screen name="logout" options={{ drawerItemStyle: { display: 'none' } }} />
+            <Drawer.Screen name="settings_screens" options={{ drawerItemStyle: { display: 'none' } }} />
             </Drawer>
         </ThemeProvider>
     );

@@ -1,7 +1,8 @@
-import { View, Text, Switch, StyleSheet, Platform } from "react-native";
+import { View, Text, Switch, StyleSheet, Platform, Button } from "react-native";
 import { useThemeContext } from "../../context/theme_context";
 import { useTheme } from "@react-navigation/native";
 import { useEffect, useState } from 'react';
+import { router } from "expo-router";
 
 export default function SettingsScreen() {
   const { isDark, toggleTheme } = useThemeContext();
@@ -23,6 +24,7 @@ export default function SettingsScreen() {
           trackColor={{ false: "#ccc", true: "#2196F3" }}
           thumbColor={Platform.OS === "android" ? (isDark ? "#fff" : "#f4f3f4") : undefined}
         />
+        <Button title="Edit Profile" onPress={() => router.push("./settings_screens/edit_profile")} />
       </View>
     </View>
   );
