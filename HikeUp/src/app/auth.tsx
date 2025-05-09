@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import auth from "@react-native-firebase/auth";
 import NetInfo from '@react-native-community/netinfo';
-import { LOCAL_IP } from "../assets/constants";
+import { LOCAL_IP } from "./assets/constants";
 
 import { 
   GoogleSignin,

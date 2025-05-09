@@ -4,10 +4,12 @@ import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
-import { GOOGLE_MAPS_API, LOCAL_IP } from '../../assets/constants';
-import { router } from "expo-router";
+import { GOOGLE_MAPS_API, LOCAL_IP } from '../assets/constants';
+import { router, useLocalSearchParams } from "expo-router";
 
 const { width } = Dimensions.get('window');
+
+type ValidReturnPaths = '/hike/hike' ;
 
 export default function MapScreen() {
   const searchRef = useRef<any>(null);
@@ -21,18 +23,54 @@ export default function MapScreen() {
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   });
+  
+  // Get parameters when map is opened in location selection mode
+  const params = useLocalSearchParams();
+  const returnToHike = params.returnToHike?.toString(); // Path to return to HikeSpecs
+  const locationField = params.fieldType?.toString(); // 'start' or 'destination'
+  const initialLocation = params.initialLocation?.toString(); // Initial location if any
+  
+  // Check if we're in location selection mode
+  const isLocationPicker = !!returnToHike && !!locationField;
+  console.log(isLocationPicker, returnToHike, locationField);
 
   useEffect(() => {
+    // Reset points and route when component mounts
     setPoints([]);
     setRouteCoords([]);
+    
+    // Try to parse initial location if provided
+    if (initialLocation) {
+      try {
+        // Try to parse as lat,lng format
+        const [lat, lng] = initialLocation.split(',').map(num => parseFloat(num.trim()));
+        if (!isNaN(lat) && !isNaN(lng)) {
+          // Set initial region to the provided coordinates
+          const newRegion = {
+            latitude: lat,
+            longitude: lng,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          };
+          setRegion(newRegion);
+          
+          // If in location picker mode, set the initial point
+          if (isLocationPicker) {
+            setPoints([{ latitude: lat, longitude: lng }]);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to parse initial location:', error);
+      }
+    }
   }, []);
 
-  // 🔁 Fetch route when both points are selected
+  // 🔁 Fetch route when both points are selected (only in regular mode)
   useEffect(() => {
-    if (points.length === 2) {
+    if (!isLocationPicker && points.length === 2) {
       fetchRoute();
     }
-  }, [points]);
+  }, [points, isLocationPicker]);
 
   const decodePolyline = (t: string): LatLng[] => {
     let points = [];
@@ -91,10 +129,32 @@ export default function MapScreen() {
 
   const onMapPress = (e: any) => {
     const { latitude, longitude } = e.nativeEvent.coordinate;
-    if (points.length < 2) {
-      setPoints([...points, { latitude, longitude }]);
+    
+    if (isLocationPicker) {
+      // In location picker mode, we only need one point
+      setPoints([{ latitude, longitude }]);
     } else {
-      Alert.alert('Limit reached', 'Only 2 points (start and end) allowed.');
+      // Regular mode - add start and end points for route
+      if (points.length < 2) {
+        setPoints([...points, { latitude, longitude }]);
+      } else {
+        Alert.alert('Limit reached', 'Only 2 points (start and end) allowed.');
+      }
+    }
+  };
+  
+  // Confirm selected location and return to HikeSpecs
+  const confirmLocation = () => {
+    if (isLocationPicker && points.length > 0) {
+      const selectedPoint = points[0];
+      router.replace({
+        pathname: returnToHike as ValidReturnPaths,
+        params: {
+          selectedLatitude: selectedPoint.latitude.toString(),
+          selectedLongitude: selectedPoint.longitude.toString(),
+          locationField: locationField
+        }
+      });
     }
   };
 
@@ -157,7 +217,7 @@ export default function MapScreen() {
       // wait before navigating to avoid race condition
       setTimeout(() => {
         router.push({
-          pathname: '/hike',
+          pathname: '/hike/hike',
           params: {
             id: hikeId.toString(),
             editable: 'true'
@@ -191,13 +251,16 @@ export default function MapScreen() {
         onRegionChangeComplete={setRegion}
         onPress={onMapPress}
       >
-        {(routeCoords.length > 0 || points.length > 0) && (
+        {/* In regular mode, show polyline between points */}
+        {!isLocationPicker && (routeCoords.length > 0 || points.length > 0) && (
           <Polyline
             coordinates={routeCoords.length > 0 ? routeCoords : points}
             strokeColor="blue"
             strokeWidth={4}
           />
         )}
+        
+        {/* Always show markers for selected points */}
         {points.map((point, index) => (
           <Marker key={index} coordinate={point} />
         ))}
@@ -219,6 +282,11 @@ export default function MapScreen() {
               };
               setRegion(newRegion);
               mapRef.current?.animateToRegion(newRegion, 300);
+              
+              // If in location picker mode, set this as the selected point
+              if (isLocationPicker) {
+                setPoints([{ latitude: loc.lat, longitude: loc.lng }]);
+              }
             }
           }}
           query={{ key: GOOGLE_MAPS_API, language: 'en' }}
@@ -261,9 +329,35 @@ export default function MapScreen() {
         </TouchableOpacity>
       </View>
 
-      {points.length === 2 && (
-        <TouchableOpacity onPress={createHike} style={styles.saveButton}>
-          <Text style={{ color: 'white' }}>Create Hike</Text>
+      {/* Show different buttons based on mode */}
+      {isLocationPicker ? (
+        points.length > 0 && (
+          <TouchableOpacity onPress={confirmLocation} style={styles.confirmLocationButton}>
+            <Text style={{ color: 'white' }}>
+              Confirm {locationField === 'start' ? 'Starting' : 'Destination'} Point
+            </Text>
+          </TouchableOpacity>
+        )
+      ) : (
+        points.length === 2 && (
+          <TouchableOpacity onPress={createHike} style={styles.saveButton}>
+            <Text style={{ color: 'white' }}>Create Hike</Text>
+          </TouchableOpacity>
+        )
+      )}
+      
+      {/* Back button for location picker mode */}
+      {isLocationPicker && (
+        <TouchableOpacity 
+          onPress={() => router.replace({
+            pathname: returnToHike as ValidReturnPaths,
+            params: {
+              editable: "true"
+            }
+          })}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
       )}
     </View>
@@ -325,6 +419,24 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
   },
+  confirmLocationButton: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 8,
+    borderRadius: 20,
+    zIndex: 20,
+  }
 });
 
 type LatLng = {
