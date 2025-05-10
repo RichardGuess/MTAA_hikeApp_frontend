@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "@react-navigation/native";
 import auth from "@react-native-firebase/auth";
 import { LOCAL_IP } from "../../../assets/constants";
+import { router } from "expo-router";
 
 
 export default function EditProfileScreen() {
@@ -81,6 +82,11 @@ export default function EditProfileScreen() {
       if (!res.ok) throw new Error("Failed to update profile");
   
       Alert.alert("Success", "Profile updated!");
+
+      setTimeout(() => {
+        router.replace('../home_redirect');
+      }, 1000);
+
     } catch (err) {
       console.error(err);
       Alert.alert("Error", "Could not update profile");
