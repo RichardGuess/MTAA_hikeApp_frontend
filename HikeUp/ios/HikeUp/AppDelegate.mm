@@ -1,5 +1,6 @@
 #import "AppDelegate.h"
 #import <Firebase/Firebase.h>
+#import <GoogleMaps/GoogleMaps.h>
 
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
@@ -8,6 +9,8 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+// Initialize Google Maps SDK with your API key
+[GMSServices provideAPIKey:@"AIzaSyDWeJdJvhteAc7NM5UzYlEvfosFhd3CS_s"];
 // @generated begin @react-native-firebase/app-didFinishLaunchingWithOptions - expo prebuild (DO NOT MODIFY) sync-ecd111c37e49fdd1ed6354203cd6b1e2a38cccda
 [FIRApp configure];
 // @generated end @react-native-firebase/app-didFinishLaunchingWithOptions

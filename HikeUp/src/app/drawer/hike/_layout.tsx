@@ -8,7 +8,7 @@ export default function HikeLayout() {
         headerShown: true,
       }}
     >
-      <Stack.Screen name="hike" options={{ title: 'hike' }} />
+      <Stack.Screen name="hikeScreen" options={{ title: 'hike' }} />
       <Stack.Screen name="map" options={{ title: 'map', presentation: 'card' }} />
     </Stack>  
     );

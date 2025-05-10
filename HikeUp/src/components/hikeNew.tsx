@@ -455,15 +455,15 @@ export default function HikeEdit({ hike }: { hike: Hike | null }) {
         exists ? updateHike(updated) : addHike(updated);
         showMessage({ message: exists ? 'Hike updated' : 'Hike created', type: 'success' });
         setCurrentHike(null);
-        router.back();
+        router.replace('/drawer/homeBar/home');
     }
 
     const openLocationPicker = (field: 'start_point' | 'dest_point') => {
         updateCurrentHikeField('name', name);
         router.push({
-            pathname: '../app/drawer/hike/map',
+            pathname: '/drawer/hike/map',
             params: {
-                returnToHike: '/hike/hike',
+                returnToHike: '/drawer/hike/hikeScreen',
                 initialLocation: field === 'start_point' ? startPoint : destPoint,
                 fieldType: field,
                 id: id?.toString(),

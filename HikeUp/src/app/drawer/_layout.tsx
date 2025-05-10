@@ -49,15 +49,15 @@ export default function DrawerLayout() {
             )}
             >
             <Drawer.Screen
-                name="map_redirect"
-                options={{
-                title: "Map",
-                }}
-            />
-            <Drawer.Screen
                 name="home_redirect"
                 options={{
                 title: "Hikes",
+                }}
+            />
+            <Drawer.Screen
+                name="map_redirect"
+                options={{
+                title: "Map",
                 }}
             />
             <Drawer.Screen

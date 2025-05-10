@@ -184,10 +184,11 @@ export default function HomeScreen() {
       );
     } else {
       router.push({
-        pathname: '../hike',
+        pathname: '/drawer/hike/hikeScreen',
         params: {
           id: hike.id.toString(),
-          editable: 'false'
+          editable: 'false',
+          mode: "view"
         }  
       });
     }
@@ -211,9 +212,10 @@ export default function HomeScreen() {
 
   const handleAddPress = () => {
     router.push({
-      pathname: "../hike",
+      pathname: '/drawer/hike/hikeScreen',
       params: {
-        editable: "true"
+        editable: "true",
+        mode: "add"
       }
     });
   };
@@ -289,7 +291,7 @@ const getStyles = (colors: any) =>
       display: 'flex',
       justifyContent: 'center',
       flex: 1,
-      paddingTop: 50,
+      paddingTop: 100,
       paddingHorizontal: 16,
       backgroundColor: colors.background, // dark/light aware
     },

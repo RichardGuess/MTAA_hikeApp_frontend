@@ -15,7 +15,7 @@ type Mode = 'add' | 'view';
 
 
 export default function HikeScreen() {
-  const { id, mode: urlMode } = useLocalSearchParams<{ id?: string; mode: string }>();
+  const { id, mode: urlMode } = useLocalSearchParams<{ id?: string; mode: Mode }>();
   const [data, setData] = useState<Hike | null>(null);
   const [mode, setMode] = useState<Mode>('view');
   const [canEdit, setCanEdit] = useState(false);

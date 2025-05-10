@@ -221,7 +221,7 @@ export default function MapScreen() {
         provider={PROVIDER_GOOGLE}
         style={StyleSheet.absoluteFillObject}
         region={region}
-        onRegionChangeComplete={setRegion}
+        //onRegionChangeComplete={setRegion}//if this is commented out everything works on ios
         onPress={onMapPress}
         customMapStyle={isDark ? darkMapStyle : []}
       >
@@ -315,7 +315,7 @@ const getStyles = (colors: any, isDark: boolean) =>
     container: { flex: 1 },
     searchContainer: {
       position: 'absolute',
-      top: 50,  
+      top: 120,  
       width: width - 20,
       alignSelf: 'center',
       zIndex: 9999,

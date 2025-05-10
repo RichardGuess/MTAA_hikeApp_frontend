@@ -31,9 +31,12 @@ target 'HikeUp' do
     ]
   end
 
+  pod 'GoogleMaps'
 # @generated begin react-native-maps - expo prebuild (DO NOT MODIFY) sync-e998e3efeb335e37f5f7a069abfc6d5ecd4fd33e
   rn_maps_path = File.dirname(`node --print "require.resolve('react-native-maps/package.json')"`) 
 
+  rn_maps_path = '../node_modules/react-native-maps'
+  pod 'react-native-maps/Google', :path => rn_maps_path
 # @generated end react-native-maps
   config = use_native_modules!(config_command)
 
