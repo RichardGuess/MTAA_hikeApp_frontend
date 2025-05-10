@@ -1,6 +1,7 @@
 // firebaseConfig.ts
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCuEeAiUgF09x2H9oYYYrS4GhonYq3bUcY",
@@ -12,7 +13,10 @@ const firebaseConfig = {
   measurementId: "G-434KW6Z141"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// prevents reinitializing on Fast Refresh
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-export { auth };
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+export { auth, db };

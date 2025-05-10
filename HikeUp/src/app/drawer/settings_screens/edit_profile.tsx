@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "@react-navigation/native";
 import auth from "@react-native-firebase/auth";
 import { LOCAL_IP } from "../../../assets/constants";
+import { router } from "expo-router";
 
 
 export default function EditProfileScreen() {
@@ -27,30 +28,31 @@ export default function EditProfileScreen() {
 
       const token = await user.getIdToken(true);
 
-      // ⚠️ Set this to the correct ID dynamically (maybe from context)
-      const hardcodedUserId = 1;
-      setUserId(hardcodedUserId);
-
-      const res = await fetch(`${LOCAL_IP}/api/users/${hardcodedUserId}`, {
+      // get user info by Firebase email
+      const res = await fetch(`${LOCAL_IP}/api/users/search?email=${user.email}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) throw new Error("Failed to fetch profile");
 
       const data = await res.json();
-      const userData = data.body;
+      const userData = data.body?.[0];
 
+      if (!userData?.id) throw new Error("User ID not found in response");
+
+      setUserId(userData.id);
       setForm({
-        nickname: userData.nickname,
-        name: userData.name,
-        surname: userData.surname,
-        email: userData.email,
-        profile_picture: userData.profile_picture,
+        nickname: userData.nickname || '',
+        name: userData.name || '',
+        surname: userData.surname || '',
+        email: userData.email || '',
+        profile_picture: userData.profile_picture || '',
       });
     } catch (err) {
       console.error("Failed to load profile", err);
     }
   };
+
 
   fetchUserData();
 }, []);
@@ -81,6 +83,11 @@ export default function EditProfileScreen() {
       if (!res.ok) throw new Error("Failed to update profile");
   
       Alert.alert("Success", "Profile updated!");
+
+      setTimeout(() => {
+        router.replace('../home_redirect');
+      }, 1000);
+
     } catch (err) {
       console.error(err);
       Alert.alert("Error", "Could not update profile");
