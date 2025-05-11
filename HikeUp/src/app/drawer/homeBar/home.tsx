@@ -86,7 +86,7 @@ export default function HomeScreen() {
       setRefreshing(false); // hide spinner
     }
   };
-
+  //add id check when fetching users from db
   //Fetching hike details
   const fetchHikeDetails = async (HikeId : number | string) => {
     try {

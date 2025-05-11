@@ -1,8 +1,6 @@
-// OfflineMap.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
-import * as FileSystem from 'expo-file-system';
 import { Asset } from 'expo-asset';
 
 export default function OfflineMap() {
@@ -10,6 +8,7 @@ export default function OfflineMap() {
 
   React.useEffect(() => {
     const loadHtml = async () => {
+      // Load the local HTML file
       const asset = Asset.fromModule(require('./osmMap.html'));
       await asset.downloadAsync();
       setHtmlUri(asset.localUri);

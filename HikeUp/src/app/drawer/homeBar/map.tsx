@@ -8,7 +8,7 @@ import { GOOGLE_MAPS_API, LOCAL_IP } from '../../../assets/constants';
 import { router } from "expo-router";
 import { useThemeContext } from '../../../context/theme_context';
 import * as Location from 'expo-location';
-import OfflineMap from '../../../components/offlineMap';
+import MapWebView from '../../../components/offlineMap';
 
 
 const { width } = Dimensions.get('window');
@@ -397,7 +397,7 @@ const zoom = (zoomIn: boolean) => {
 };
 
 return (
-  <OfflineMap />);
+  <MapWebView />);
   // <View style={styles.container}>
   //   <MapView
   //     ref={mapRef}

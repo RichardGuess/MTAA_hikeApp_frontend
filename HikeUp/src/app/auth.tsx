@@ -201,8 +201,8 @@ export default function AuthScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>{isSignUp ? "Sign Up" : "Sign In"}</Text>
 
-      <TextInput placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" style={styles.input} />
-      <TextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
+      <TextInput placeholder="Email" placeholderTextColor={'#333'} value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" style={styles.input} />
+      <TextInput placeholder="Password" placeholderTextColor={'#333'} value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
 
       <Button title={isSignUp ? "Create Account" : "Log in"} onPress={handleAuth} />
 
