@@ -6,6 +6,8 @@ import { showMessage } from 'react-native-flash-message';
 import { useHikeStore, formatCoordinates, parseCoordinates, LatLng } from '../context/store';
 import { Hike } from '../types/hike';
 import { GOOGLE_MAPS_API, LOCAL_IP } from '../assets/constants';
+import auth from "@react-native-firebase/auth";
+
 
 export default function HikeNew() {
     const { addHike, updateCurrentHikeField, setCurrentHike, currentHike, initNewHike } = useHikeStore();
@@ -33,7 +35,6 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
     useFocusEffect(
         useCallback(() => {
             if (currentHike) {
-                console.log('ahoj',currentHike)
                 if (currentHike.name) setName(currentHike.name);
                 if (currentHike.start_point) setStartPoint(formatCoordinates(currentHike.start_point as LatLng || String));
                 if (currentHike.dest_point) setDestPoint(formatCoordinates(currentHike.dest_point as LatLng || String));
@@ -42,6 +43,52 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
             }
         }, [currentHike])
     );
+
+    const sendDataToServer = async () => {
+        try {
+            const user = auth().currentUser
+            const firebaseToken = await user?.getIdToken();
+            const userEmail = user?.email;
+            
+    
+            if (!firebaseToken) {
+                throw new Error('User is not authenticated');
+            }
+    
+            const startCoords = parseCoordinates(startPoint);
+            const destCoords = parseCoordinates(destPoint);
+    
+            const hikeData = {
+                name,
+                userEmail,
+                start_point: startPoint,
+                dest_point: destPoint,
+                distance: Number(distance) || null,
+                calories: Number(calories) || null,
+                geom: routeInfo ? routeInfo.polyline : null,
+            };
+    
+            const response = await fetch(`${LOCAL_IP}/api/hikes/add`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${firebaseToken}`,
+                },
+                body: JSON.stringify(hikeData),
+            });
+    
+            if (!response.ok) {
+                const text = await response.text();
+                console.error("Server responded with error:", text);
+                throw new Error(`Failed to update hike: ${response.status}`);
+            }
+    
+            const result = await response.json();
+            console.log("Successfully sent hike to server:", result);
+        } catch (error) {
+            console.error("Error updating hike:", error);
+        }
+    };
 
     const geocodeAddress = async (address: string) => {
         const response = await fetch(
@@ -82,7 +129,6 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
             const destination = `${destCoords.latitude},${destCoords.longitude}`;
     
             const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&mode=walking&key=${GOOGLE_MAPS_API}`;
-    
             const response = await fetch(url);
             const json = await response.json();
     
@@ -137,6 +183,7 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
         addHike(newHike);
         showMessage({ message: 'Hike created', type: 'success' });
         setCurrentHike(null);
+        sendDataToServer();
         router.replace('/drawer/homeBar/home');
     }
 
@@ -206,6 +253,7 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
             <Text>Distance (km):</Text>
             <TextInput 
                 value={distance} 
+                editable={false}
                 onChangeText={setDistance} 
                 style={styles.input} 
                 keyboardType="numeric" 
@@ -214,6 +262,7 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
             <Text>Calories:</Text>
             <TextInput 
                 value={calories} 
+                editable={false}
                 onChangeText={setCalories} 
                 style={styles.input} 
                 keyboardType="numeric" 
