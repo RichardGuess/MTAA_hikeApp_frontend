@@ -25,6 +25,7 @@ export default function SettingsScreen() {
           thumbColor={Platform.OS === "android" ? (isDark ? "#fff" : "#f4f3f4") : undefined}
         />
         <Button title="Edit Profile" onPress={() => router.push("./settings_screens/edit_profile")} />
+        <Button title="Manage Permissions" onPress={() => router.push("./settings_screens/permissions")} />
       </View>
     </View>
   );
