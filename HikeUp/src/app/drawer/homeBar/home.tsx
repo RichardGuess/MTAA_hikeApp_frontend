@@ -9,6 +9,8 @@ import NetInfo from '@react-native-community/netinfo';
 import { showMessage, hideMessage } from "react-native-flash-message";
 import { Hike } from '../../../types/hike'
 import { useThemeContext } from "../../../context/theme_context"; 
+import { isTablet } from '../../../utils/responsive';
+import { Dimensions } from 'react-native';
 
 export default function HomeScreen() {
   const [hikes, setHikes] = useState<any[]>([]);
@@ -18,8 +20,13 @@ export default function HomeScreen() {
   const [deleteMode, setDeleteMode] = useState(false);  // Track delete mode
   const { theme } = useThemeContext();
   const colors = theme.colors;
-  const styles = getStyles(colors);
-  
+  const { width, height } = Dimensions.get('window');
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = getStyles(colors, isTablet);
+
+  useEffect(() => {
+    console.log(isTablet ? '🟦 Tablet detected' : '🟩 Phone detected');
+  }, []);
   
 
   console.log("Theme colors:", colors);
@@ -86,7 +93,7 @@ export default function HomeScreen() {
       setRefreshing(false); // hide spinner
     }
   };
-  //add id check when fetching users from db
+
   //Fetching hike details
   const fetchHikeDetails = async (HikeId : number | string) => {
     try {
@@ -251,74 +258,79 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Your Hikes:</Text>
-      {hikes.length === 0 ? (
-        <Text style={styles.noHikesText}>No hikes. You should add some!</Text>
-      ) : (
-        <FlatList
-          data={hikes}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <HikeView 
-              hike={item} 
-              onPress={handleHikePress} 
-              onDownload={handleDownloadPress} 
-              isOnline={isOnline}
-            />
-          )}
-          refreshing={refreshing}
-          onRefresh={getHikes}
-        />
-      )}
-      <View style={styles.custom}>
-        <TouchableOpacity style={styles.button} onPress={handleDeletePress}>
-          <Text style={{fontSize: 20}}>Delete</Text>
+      <View style={{ flex: 1, width: '100%' }}>
+        <Text style={styles.title}>Your Hikes:</Text>
+
+        {hikes.length === 0 ? (
+          <Text style={styles.noHikesText}>No hikes. You should add some!</Text>
+        ) : (
+          <FlatList
+            data={hikes}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <HikeView 
+                hike={item} 
+                onPress={handleHikePress} 
+                onDownload={handleDownloadPress} 
+                isOnline={isOnline}
+              />
+            )}
+            refreshing={refreshing}
+            onRefresh={getHikes}
+          />
+        )}
+      </View>
+
+      <View style={isTablet ? styles.tabletButtonContainer : styles.custom}>
+        <TouchableOpacity 
+          style={isTablet ? styles.tabletButton : styles.button}
+          onPress={handleDeletePress}
+        >
+          <Text style={styles.buttonText}>Delete</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleAddPress}>
-          <Text style={{fontSize: 20}}>Add</Text>
+
+        <TouchableOpacity 
+          style={isTablet ? styles.tabletButton : styles.button}
+          onPress={handleAddPress}
+        >
+          <Text style={styles.buttonText}>Add</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleFilterPress}>
-          <Text style={{fontSize: 20}}>Filter</Text>
+
+        <TouchableOpacity 
+          style={isTablet ? styles.tabletButton : styles.button}
+          onPress={handleFilterPress}
+        >
+          <Text style={styles.buttonText}>Filter</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
+
+
 }
 
-const getStyles = (colors: any) =>
+const getStyles = (colors: any, isTablet: boolean) =>
   StyleSheet.create({
     container: {
-      display: 'flex',
-      justifyContent: 'center',
       flex: 1,
-      paddingTop: 100,
-      paddingHorizontal: 16,
-      backgroundColor: colors.background, // dark/light aware
+      width: '100%',
+      justifyContent: 'center',
+      alignItems: 'stretch',
+      paddingTop: isTablet ? 60 : 100,
+      paddingHorizontal: isTablet ? 32 : 16,
+      backgroundColor: colors.background,
     },
     title: {
       fontSize: 20,
-      fontWeight: "bold",
+      fontWeight: 'bold',
       marginBottom: 12,
-      color: colors.text, // apply theme text color
-    },
-    custom: {
-      display: 'flex',
-      alignSelf: 'center',
-      alignItems: 'center',
-      marginBottom: 10,
-      flexDirection: 'row',
-      gap: 25
-    },
-    button: {
-      backgroundColor: colors.primary, // or colors.card / text if needed
-      padding: 5,
-      borderRadius: 8,
+      color: colors.text,
     },
     noHikesText: {
       fontSize: 16,
       color: colors.text,
       marginTop: 20,
-      textAlign: "center",
+      textAlign: 'center',
     },
     hikeItem: {
       padding: 12,
@@ -327,5 +339,42 @@ const getStyles = (colors: any) =>
       marginBottom: 10,
       borderWidth: 1,
       borderColor: colors.border,
+    },
+    // mobile button container (top or inline)
+    custom: {
+      flexDirection: 'row',
+      alignSelf: 'center',
+      alignItems: 'center',
+      marginBottom: 10,
+      gap: 25,
+    },
+    // tablet button container at bottom of screen
+    tabletButtonContainer: {
+      position: 'absolute',
+      bottom: 30,
+      left: 0,
+      right: 0,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 40,
+      paddingHorizontal: 20,
+    },
+    // shared mobile button
+    button: {
+      backgroundColor: colors.primary,
+      padding: 5,
+      borderRadius: 8,
+    },
+    // larger tablet button
+    tabletButton: {
+      backgroundColor: colors.primary,
+      paddingVertical: 14,
+      paddingHorizontal: 22,
+      borderRadius: 10,
+    },
+    buttonText: {
+      color: 'white',
+      fontSize: isTablet ? 20 : 16,
+      fontWeight: '600',
     },
   });
