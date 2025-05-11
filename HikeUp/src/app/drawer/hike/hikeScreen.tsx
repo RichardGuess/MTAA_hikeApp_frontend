@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
 
 import { LOCAL_IP } from "../../../assets/constants";
-import HikeSpecs from '../../../components/hikeNew'
+import HikeEdit from '../../../components/hikeNew'
 import HikeDetail from "../../../components/hikeDetail";
 
 import { Hike } from "../../../types/hike";
@@ -91,7 +91,7 @@ export default function HikeScreen() {
   return (
     <View style={{ flex: 1, padding: 16 }}>
       { (mode === "add")?(
-        <HikeSpecs hike={data} />
+        <HikeEdit />
       ) : (mode === 'view') ? (
         <HikeDetail hike={data} editable={canEdit} />
       ) : (

@@ -8,10 +8,17 @@ export type LatLng = {
 };
 
 // Format coordinates to string
-export const formatCoordinates = (coords: LatLng | null): string => {
+export const formatCoordinates = (coords: LatLng | string | null): string => {
   if (!coords) return '';
-  return `${coords.latitude},${coords.longitude}`;
+  if (typeof coords === 'string') return coords;
+
+  const { latitude, longitude } = coords;
+  if (latitude === undefined || longitude === undefined) return '';
+  
+  return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
 };
+
+
 
 // Parse coordinates from string
 export const parseCoordinates = (coordsStr: string | null): LatLng | null => {
