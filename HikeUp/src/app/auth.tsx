@@ -6,6 +6,7 @@ import auth from "@react-native-firebase/auth";
 import NetInfo from '@react-native-community/netinfo';
 import { LOCAL_IP } from "../assets/constants";
 import { registerForPushNotificationsAsync } from "../utils/pushnotifications";
+import { getApp } from '@react-native-firebase/app';
 
 import { 
   GoogleSignin,
@@ -68,8 +69,10 @@ export default function AuthScreen() {
       if (!idToken) throw new Error("No ID token returned from Google");
   
       console.log("Creating Firebase credential");
+      const firebaseApp = getApp();
+
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      const userCredential = await auth().signInWithCredential(googleCredential);
+      const userCredential = await auth(firebaseApp).signInWithCredential(googleCredential);
       console.log("Firebase user credential:", userCredential);
 
       const firebaseUser = userCredential.user;

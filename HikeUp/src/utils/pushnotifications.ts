@@ -1,10 +1,10 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 export async function registerForPushNotificationsAsync() {
   if (!Device.isDevice) {
-    alert('Must use physical device for Push Notifications');
+    console.warn("⚠️ Must use physical device for push notifications");
     return null;
   }
 
@@ -17,10 +17,18 @@ export async function registerForPushNotificationsAsync() {
   }
 
   if (finalStatus !== 'granted') {
-    alert('Failed to get push token');
+    console.warn('⚠️ Push notification permissions not granted');
     return null;
   }
 
-  const tokenData = await Notifications.getExpoPushTokenAsync();
-  return tokenData.data;
+  try {
+    const tokenData = await Notifications.getExpoPushTokenAsync({
+      projectId: 'hikeapp-mtaa', // ✅ this fixes your issue
+    });
+    console.log("📲 Expo push token:", tokenData.data);
+    return tokenData.data;
+  } catch (error) {
+    console.error("❌ Error getting Expo push token", error);
+    return null;
+  }
 }
