@@ -1314,6 +1314,9 @@ PODS:
     - nanopb (~> 3.30910.0)
   - FirebaseSharedSwift (11.12.0)
   - fmt (11.0.2)
+  - GCDWebServer (3.5.4):
+    - GCDWebServer/Core (= 3.5.4)
+  - GCDWebServer/Core (3.5.4)
   - glog (0.3.5)
   - Google-Maps-iOS-Utils (6.1.0):
     - GoogleMaps (~> 9.0)
@@ -2887,6 +2890,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-static-server (0.5.0):
+    - GCDWebServer (~> 3.0)
+    - React
   - react-native-webview (13.12.5):
     - DoubleConversion
     - glog
@@ -3455,6 +3461,7 @@ DEPENDENCIES:
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - react-native-static-server (from `../node_modules/react-native-static-server`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -3508,6 +3515,7 @@ SPEC REPOS:
     - FirebaseFirestore
     - FirebaseFirestoreInternal
     - FirebaseSharedSwift
+    - GCDWebServer
     - Google-Maps-iOS-Utils
     - GoogleMaps
     - GoogleSignIn
@@ -3643,6 +3651,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-pager-view"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-static-server:
+    :path: "../node_modules/react-native-static-server"
   react-native-webview:
     :path: "../node_modules/react-native-webview"
   React-nativeconfig:
@@ -3756,6 +3766,7 @@ SPEC CHECKSUMS:
   FirebaseFirestoreInternal: 8352b1e8c127200e1eddfaaaae501cf696f58d6c
   FirebaseSharedSwift: d2475748a2d2a36242ed13baa34b2acda846c925
   fmt: 01b82d4ca6470831d1cc0852a1af644be019e8f6
+  GCDWebServer: 2c156a56c8226e2d5c0c3f208a3621ccffbe3ce4
   glog: 08b301085f15bcbb6ff8632a8ebaf239aae04e6a
   Google-Maps-iOS-Utils: 0a484b05ed21d88c9f9ebbacb007956edd508a96
   GoogleMaps: b58e9627004f47043897eeae830c3ef023678f3b
@@ -3802,6 +3813,7 @@ SPEC CHECKSUMS:
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-pager-view: 3bcbdc4751b90bc546fd567dcdf8074c0d6333bd
   react-native-safe-area-context: 276e89d3c4f33b07a982e97638d2f67590010af3
+  react-native-static-server: 201b2a945a35096be3ae7f43e367c65bcbd61343
   react-native-webview: a2382d7bf7ed34e98ab8075ff176a4c9959329d6
   React-nativeconfig: 415626a63057638759bcc75e0a96e2e07771a479
   React-NativeModulesApple: bffc60f55895c2723b1e5472fa40567fe3df4923
