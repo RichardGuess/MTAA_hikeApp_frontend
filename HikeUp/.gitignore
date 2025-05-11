@@ -39,4 +39,4 @@ app-example
 
 #constants
 
-assets/constants
+src/assets/leaflet/
