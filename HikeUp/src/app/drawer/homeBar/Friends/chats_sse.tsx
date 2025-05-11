@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, Pressable, Alert } from 'react-native';
-import { collection, query, where, orderBy, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../../../../firebaseConfig';
 import auth from '@react-native-firebase/auth';
 import { useThemeContext } from '../../../../context/theme_context';
 import { router } from 'expo-router';
-import { getApps } from 'firebase/app';
-import { getAuth as getWebAuth, signInWithCustomToken } from 'firebase/auth';
 import { LOCAL_IP } from '../../../../assets/constants';
 
 export default function ChatsScreen() {
@@ -17,47 +13,38 @@ export default function ChatsScreen() {
 
   const { theme } = useThemeContext();
   const styles = getStyles(theme.colors);
-  const currentUser = auth().currentUser;
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
   const currentUserUid = currentUser?.uid;
 
   useEffect(() => {
+    const unregister = auth().onAuthStateChanged((user) => {
+      console.log('Auth state changed:', user?.uid || 'no user');
+      setCurrentUser(user);
+      setAuthLoaded(true);
+    });
+    return () => unregister();
+  }, []);
+
+  useEffect(() => {
+    if (!authLoaded) return;
+    if (authLoaded && currentUser === null) {
+      console.warn('No user logged in — redirecting to login.');
+      router.replace('../../../auth');
+    }
+  }, [authLoaded, currentUser]);
+
+  useEffect(() => {
+    if (!authLoaded || !currentUser) return;
+
     const fetchChatsAndFriends = async () => {
-      if (!currentUser) return;
-
-      try {
-        const firebaseApp = getApps()[0];
-        const webAuth = getWebAuth(firebaseApp);
-
-        if (!webAuth.currentUser) {
-          const tokenResponse = await fetch(`${LOCAL_IP}/api/auth/custom-token`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${await currentUser.getIdToken()}`,
-            },
-          });
-          const { customToken } = await tokenResponse.json();
-          await signInWithCustomToken(webAuth, customToken);
-        }
-
-        const q = query(
-          collection(db, 'chats'),
-          where('users', 'array-contains', currentUser.uid),
-          orderBy('updatedAt', 'desc')
-        );
-
-        const snapshot = await getDocs(q);
-        const chatData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setChats(chatData);
-      } catch (e) {
-        console.error('Error fetching chats:', e);
-      }
-
       try {
         const token = await currentUser.getIdToken();
+
+        const response = await fetch(`${LOCAL_IP}/api/chat/list/${currentUser.uid}`);
+        const data = await response.json();
+        setChats(data);
+
         const userRes = await fetch(`${LOCAL_IP}/api/users/search?email=${currentUser.email}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -67,77 +54,43 @@ export default function ChatsScreen() {
         const friendsRes = await fetch(`${LOCAL_IP}/api/friends/list?user_id1=${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const data = await friendsRes.json();
-        setFriends(data);
+        const friendsdata = await friendsRes.json();
+        setFriends(friendsdata);
       } catch (err) {
-        console.error('Error fetching friends:', err);
+        console.error('Error fetching data:', err);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
+    console.log('Current user UID:', currentUser?.uid);
     fetchChatsAndFriends();
-  }, []);
-
-  const getFirebaseUIDFromEmail = async (email: string): Promise<string | null> => {
-    try {
-      const q = query(collection(db, 'users'), where('email', '==', email));
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        return snapshot.docs[0].id;
-      }
-      return null;
-    } catch (e) {
-      console.error('Failed to find UID by email:', e);
-      return null;
-    }
-  };
+  }, [authLoaded, currentUser]);
 
   const startChatWith = async (friendEmail: string) => {
-    if (!friendEmail) {
-      Alert.alert("Error", "This user does not have an email set.");
+    if (!friendEmail || !currentUserUid) {
+      Alert.alert('Error', 'Invalid user data');
       return;
     }
 
     try {
-      const userQuery = query(collection(db, 'users'), where('email', '==', friendEmail));
-      const snapshot = await getDocs(userQuery);
+      const uidRes = await fetch(`${LOCAL_IP}/api/chat/firebase-uid?email=${friendEmail}`);
+      const { uid: friendUid } = await uidRes.json();
 
-      if (snapshot.empty) {
-        Alert.alert("This user has not yet signed in via Firebase.");
-        return;
-      }
-
-      const friendUid = snapshot.docs[0].id;
-
-      const existing = chats.find(c =>
-        Array.isArray(c.users) &&
-        c.users.includes(currentUserUid) &&
-        c.users.includes(friendUid)
-      );
-
-      if (existing) {
-        setShowModal(false);
-        router.push({ pathname: '../[chatId]', params: { chatId: existing.id } });
-        return;
-      }
-
-      const newChat = await addDoc(collection(db, 'chats'), {
-        users: [currentUserUid, friendUid],
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        isGroup: false,
-        lastMessage: ''
+      const chatRes = await fetch(`${LOCAL_IP}/api/chat/start-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentUid: currentUserUid, friendUid }),
       });
 
+      const { chatId } = await chatRes.json();
       setShowModal(false);
-      router.push({ pathname: '../[chatId]', params: { chatId: newChat.id } });
+      router.push(`../chat/${chatId}`);
     } catch (err) {
-      console.error('Failed to find UID by email:', err);
+      console.error('Failed to start chat:', err);
       Alert.alert('Failed to start chat');
     }
   };
-
 
   if (loading) {
     return (
@@ -172,9 +125,7 @@ export default function ChatsScreen() {
             return (
               <TouchableOpacity
                 style={styles.chatItem}
-                onPress={() =>
-                  router.push({ pathname: '../[chatId]', params: { chatId: item.id } })
-                }
+                onPress={() => router.push(`../chat/${item.id}`)}
               >
                 <Text style={styles.text}>
                   {isGroup ? item.name || 'Unnamed Group' : `DM with ${otherUser}`}

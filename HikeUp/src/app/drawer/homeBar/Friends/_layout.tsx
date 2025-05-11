@@ -20,7 +20,7 @@ export default function FriendsTabsLayout() {
           tabBarIndicatorStyle: { backgroundColor: colors.primary },
         }}
       >
-        <TopTabs.Screen name="chats" options={{ title: "Chats" }} />
+        <TopTabs.Screen name="chats_sse" options={{ title: "Chats" }} />
         <TopTabs.Screen name="groups" options={{ title: "Groups" }} />
         <TopTabs.Screen name="friendsList" options={{ title: "Friends" }} />
       </TopTabs>

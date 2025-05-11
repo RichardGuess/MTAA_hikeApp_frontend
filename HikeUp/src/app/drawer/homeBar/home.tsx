@@ -184,7 +184,7 @@ export default function HomeScreen() {
       );
     } else {
       router.push({
-        pathname: '/drawer/hike/hikeScreen',
+        pathname: '../hike/hikeScreen',
         params: {
           id: hike.id.toString(),
           editable: 'false',
@@ -212,7 +212,7 @@ export default function HomeScreen() {
 
   const handleAddPress = () => {
     router.push({
-      pathname: '/drawer/hike/hikeScreen',
+      pathname: '../hike/hikeScreen',
       params: {
         editable: "true",
         mode: "add"

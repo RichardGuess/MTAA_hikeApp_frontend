@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import {collection,query,orderBy,onSnapshot,addDoc,updateDoc,serverTimestamp,doc} from 'firebase/firestore';
-import { db } from '../../../../firebaseConfig';
+// import {collection,query,orderBy,onSnapshot,addDoc,updateDoc,serverTimestamp,doc} from 'firebase/firestore';
+// import { db } from '../../../../firebaseConfig';
 import auth from '@react-native-firebase/auth';
-import { useThemeContext } from '../../../context/theme_context';
+import { useThemeContext } from '../../../../context/theme_context';
+import { LOCAL_IP } from '../../../../assets/constants';
 
 export default function ChatScreen() {
     const { chatId } = useLocalSearchParams<{ chatId: string }>();
+    console.log('📨 Chat ID param:', chatId);
     const [messages, setMessages] = useState<any[]>([]);
     const [input, setInput] = useState('');
     const flatListRef = useRef<FlatList>(null);
@@ -16,34 +18,62 @@ export default function ChatScreen() {
     const user = auth().currentUser;
 
     useEffect(() => {
-        const messagesRef = collection(db, 'chats', chatId, 'messages');
-        const q = query(messagesRef, orderBy('timestamp', 'asc'));
+    const wsHost = LOCAL_IP.replace(/^http(s)?:\/\//, ''); // remove http:// or https://
+    const ws = new WebSocket(`ws://${wsHost}/ws/chat/${chatId}`);
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setMessages(msgs);
+    ws.onopen = () => {
+        console.log('✅ WebSocket connected');
+    };
+
+    ws.onmessage = (event) => {
+        try {
+        const data = JSON.parse(event.data);
+        if (Array.isArray(data)) {
+            setMessages(data);
             setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-        });
+        }
+        } catch (e) {
+        console.error('Failed to parse message', e);
+        }
+    };
 
-        return unsubscribe;
+    ws.onerror = (err) => {
+        ws.onerror = console.error;
+    };
+
+    ws.onclose = () => {
+        console.log('🔌 WebSocket closed');
+    };
+
+    return () => {
+        ws.close();
+    };
     }, [chatId]);
+
+
 
     const sendMessage = async () => {
         if (!input.trim() || !user) return;
 
-        await addDoc(collection(db, 'chats', chatId, 'messages'), {
-            text: input.trim() || '[empty]',
-            sender: user.uid || 'unknown',
-            timestamp: serverTimestamp(),
-        });
+        try {
+            await fetch(`${LOCAL_IP}/api/chat/send`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chatId,
+                text: input.trim() || '[empty]',
+                sender: user.uid || 'unknown',
+            }),
+            });
 
-        await updateDoc(doc(db, 'chats', chatId), {
-            lastMessage: input.trim(),
-            updatedAt: serverTimestamp(),
-        });
-
-        setInput('');
+            setInput('');
+        } catch (err) {
+            console.error('Failed to send message:', err);
+        }
     };
+
 
     return (
         <KeyboardAvoidingView style={styles.container} behavior="padding" keyboardVerticalOffset={100}>
