@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import auth from "@react-native-firebase/auth";
 import NetInfo from '@react-native-community/netinfo';
 import { LOCAL_IP } from "../assets/constants";
+import { registerForPushNotificationsAsync } from "../utils/pushnotifications";
 
 import { 
   GoogleSignin,
@@ -75,6 +76,22 @@ export default function AuthScreen() {
       const token = await firebaseUser.getIdToken();
       console.log("Firebase ID token:", token);
   
+
+      const pushToken = await registerForPushNotificationsAsync();
+      console.log("Expo Push Token:", pushToken);
+
+      if (pushToken) {
+        await fetch(`${LOCAL_IP}/api/users/push-token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid: firebaseUser.uid,
+            token: pushToken,
+          }),
+        });
+      }
+
+
       // check if user already exists in Firebase Auth
       console.log("Checking sign-in methods for:", firebaseUser.email);
       const methods = await auth().fetchSignInMethodsForEmail(firebaseUser.email!);
@@ -126,6 +143,23 @@ export default function AuthScreen() {
       }
   
       const idToken = await userCredential.user.getIdToken();
+
+
+      const pushToken = await registerForPushNotificationsAsync();
+      console.log("Expo Push Token:", pushToken);
+
+      if (pushToken) {
+        await fetch(`${LOCAL_IP}/api/users/push-token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid: userCredential.user.uid,
+            token: pushToken,
+          }),
+        });
+      }
+
+
   
       if (isSignUp) {
         const res = await fetch(`${LOCAL_IP}/api/auth/signup`, {

@@ -58,7 +58,9 @@
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
     "ws": "^8.18.2",
-    "zustand": "^5.0.4"
+    "zustand": "^5.0.4",
+    "expo-notifications": "~0.29.14",
+    "expo-device": "~7.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
