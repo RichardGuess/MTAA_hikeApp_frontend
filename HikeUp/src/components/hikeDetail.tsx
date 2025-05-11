@@ -35,7 +35,7 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
         setCalories(hike?.calories?.toString() || '');
     }, [hike, id]);  // Dependency on `hike` or `id` ensures reset when either changes
 
-    
+
     const sendDataToServer = async () => {
         try{
             const firebaseToken = await auth().currentUser?.getIdToken();
@@ -112,7 +112,7 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                     </View>
                     <View style={styles.row}>
                         <Animated.Text style={[styles.label, { opacity: fadeAnim }]}>Created:</Animated.Text>
-                        <Animated.View style={{ opacity: fadeAnim }}>
+                        <Animated.View style={[styles.value, { opacity: fadeAnim }]}>
                             <Text style={styles.value}>
                                 {hike?.created_at ? new Date(hike.created_at).toLocaleDateString() : ""}
                             </Text>

@@ -17,6 +17,7 @@ export default function MapScreen() {
   const { currentHike, updateCurrentHikeField, setCurrentHike } = useHikeStore();
 
   const [points, setPoints] = useState<LatLng[]>([]);
+  const [locationString, setLocationString] = useState<string>('');
   const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
   const [region, setRegion] = useState({
     latitude: 48.1486,
@@ -35,6 +36,8 @@ export default function MapScreen() {
   // Check if we're in location selection mode
   const isLocationPicker = !!returnToHike && !!locationField;
 
+  
+
   useEffect(() => {
     // If we have a hike ID but no current hike, try to load it from the store
     if (hikeId && !currentHike) {
@@ -48,20 +51,10 @@ export default function MapScreen() {
     // Initialize points based on current field value
     if (currentHike && locationField) {
       const fieldValue = currentHike[locationField];
-      if (typeof fieldValue === 'object' && fieldValue !== null) {
-        // If it's already an object, use it directly
-        setPoints([fieldValue as unknown as LatLng]);
-        
-        // Update region to focus on this point
-        setRegion({
-          latitude: (fieldValue as unknown as LatLng).latitude,
-          longitude: (fieldValue as unknown as LatLng).longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        });
-      } else if (typeof fieldValue === 'string') {
-        // If it's a string, try to parse it
-        const coords = parseCoordinates(fieldValue as string);
+      if (typeof fieldValue === 'string') {
+        setLocationString(fieldValue);
+        // Try to parse it to display on map
+        const coords = parseCoordinates(fieldValue);
         if (coords) {
           setPoints([coords]);
           setRegion({
@@ -71,9 +64,23 @@ export default function MapScreen() {
             longitudeDelta: 0.01,
           });
         }
+      } else if (typeof fieldValue === 'object' && fieldValue !== null) {
+        // Convert object to string format
+        const coordStr = formatCoordinates((fieldValue as unknown as LatLng));
+        setLocationString(coordStr);
+        setPoints([fieldValue as unknown as LatLng]);
+        
+        // Update region to focus on this point
+        setRegion({
+          latitude: (fieldValue as unknown as LatLng).latitude,
+          longitude: (fieldValue as unknown as LatLng).longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        });
       }
     } else if (initialLocation) {
-      // If no current value but we have initialLocation, try to parse it
+      // If no current value but we have initialLocation
+      setLocationString(initialLocation);
       try {
         const coords = parseCoordinates(initialLocation);
         if (coords) {
@@ -91,23 +98,50 @@ export default function MapScreen() {
     }
   }, [currentHike, locationField, initialLocation, hikeId]);
 
-  const onMapPress = (e: MapPressEvent) => {
+  // Helper function to get address from coordinates
+  const getAddressFromCoordinates = async (latitude: number, longitude: number): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API}`
+      );
+      const responseJson = await response.json();
+      
+      if (responseJson.status === 'OK' && responseJson.results.length > 0) {
+        // Get the most specific address component (usually the first result)
+        return responseJson.results[0].formatted_address;
+      }
+      
+      // If no address found, return formatted coordinates
+      return formatCoordinates({ latitude, longitude });
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      // Fallback to coordinates string
+      return formatCoordinates({ latitude, longitude });
+    }
+  };
+
+  const onMapPress = async (e: MapPressEvent) => {
     const { latitude, longitude } = e.nativeEvent.coordinate;
     if (isLocationPicker) {
-      // In location picker mode, we only need one point
+      // In location picker mode, we convert to address string
       const newPoint = { latitude, longitude };
       setPoints([newPoint]);
+      
+      // Get address string or fallback to coordinates
+      const locationStr = await getAddressFromCoordinates(latitude, longitude);
+      setLocationString(locationStr);
     }
   };
   
   // Confirm selected location and return to HikeSpecs
   const confirmLocation = () => {
     if (isLocationPicker && points.length > 0) {
-      const selectedPoint = points[0];
-      
-      // Update the appropriate field in currentHike
+      // Update with the string representation
       if (locationField === 'start_point' || locationField === 'dest_point') {
-        updateCurrentHikeField(locationField, selectedPoint);
+        console.log(locationString)
+        updateCurrentHikeField(locationField, locationString);
+        const updatedHike = useHikeStore.getState().currentHike;
+        console.log(updatedHike);
       }
       
       // Navigate back to the hike details screen
@@ -159,6 +193,10 @@ export default function MapScreen() {
         <GooglePlacesAutocomplete
           ref={searchRef}
           placeholder="Search location"
+          textInputProps={{
+            placeholderTextColor: 'black'
+            
+          }}
           fetchDetails={true}
           onPress={(data, details = null) => {
             if (details && details.geometry) {
@@ -173,7 +211,9 @@ export default function MapScreen() {
               mapRef.current?.animateToRegion(newRegion, 300);
               
               if (isLocationPicker) {
-                setPoints([{ latitude: lat, longitude: lng }]);
+                setPoints([{ latitude: lat , longitude: lng }]);
+                // Use the place name or address directly from search
+                setLocationString(data.description);
               }
             }
           }}
@@ -191,6 +231,7 @@ export default function MapScreen() {
             textInput: {
               height: 38,
               fontSize: 16,
+              color: 'black'
             },
             listView: {
               backgroundColor: 'white',
@@ -198,6 +239,15 @@ export default function MapScreen() {
           }}
         />
       </View>
+      
+      {/* Selected Location Display */}
+      {isLocationPicker && locationString && (
+        <View style={styles.locationDisplay}>
+          <Text style={styles.locationText} numberOfLines={2}>
+            {locationString}
+          </Text>
+        </View>
+      )}
       
       {/* Zoom Controls */}
       <View style={styles.zoomControlsContainer}>
@@ -234,6 +284,25 @@ const styles = StyleSheet.create({
     left: 10,
     right: 10,
     zIndex: 1,
+  },
+  locationDisplay: {
+    position: 'absolute',
+    top: 70,
+    left: 10,
+    right: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 10,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+    zIndex: 1,
+  },
+  locationText: {
+    fontSize: 14,
+    textAlign: 'center',
   },
   zoomControlsContainer: {
     position: 'absolute',

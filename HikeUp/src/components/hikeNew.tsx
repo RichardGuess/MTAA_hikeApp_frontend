@@ -1,433 +1,116 @@
-// import { View, Text, StyleSheet, TextInput, GestureResponderEvent, TouchableOpacity } from 'react-native';
-// import React, { useState, useEffect } from 'react';
-// import { router, useLocalSearchParams } from 'expo-router';
-// import { Hike } from '../types/hike';
-// import FontAwesome from '@expo/vector-icons/FontAwesome';
-// import { showMessage } from "react-native-flash-message";
-// import { useHikeStore, formatCoordinates, parseCoordinates, LatLng } from '../store';
-
-// type hikeSpecsProps = {
-//     hike: Hike | null;
-//     editable: boolean;
-// };
-
-// export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
-//     const { hikes, addHike, setHikes, currentHike, updateHike, updateCurrentHikeField, setCurrentHike } = useHikeStore();
-    
-//     const [changable, setChangable] = useState(false);
-//     const params = useLocalSearchParams();
-//     const id = Number(params.id);
-    
-//     // Initialize currentHike if needed
-//     useEffect(() => {
-//         if (hike && hike.id && editable) {
-//             // If we have a hike passed as prop, set it as currentHike
-//             setCurrentHike(hike);
-//         } else if (id && !currentHike) {
-//             // If we have an ID but no currentHike, find it in the store
-//             const existingHike = hikes.find(h => h.id === id);
-//             if (existingHike) {
-//                 setCurrentHike(existingHike);
-//             }
-//         }
-//     }, [hike, id]);
-
-//     // Local form state
-//     const [name, setName] = useState(currentHike?.name || 'New Hike');
-//     const [startPoint, setStartPoint] = useState('');
-//     const [destPoint, setDestPoint] = useState('');
-//     const [distance, setDistance] = useState('');
-//     const [calories, setCalories] = useState('');
-
-//     // Update local state when currentHike changes
-//     useEffect(() => {
-//         if (currentHike) {
-//             setName(currentHike.name || 'New Hike');
-            
-//             // Format coordinates for display
-//             if (typeof currentHike.start_point === 'object' && currentHike.start_point !== null) {
-//                 setStartPoint(formatCoordinates(currentHike.start_point as unknown as LatLng));
-//             } else {
-//                 setStartPoint(currentHike.start_point?.toString() || '');
-//             }
-            
-//             if (typeof currentHike.dest_point === 'object' && currentHike.dest_point !== null) {
-//                 setDestPoint(formatCoordinates(currentHike.dest_point as unknown as LatLng));
-//             } else {
-//                 setDestPoint(currentHike.dest_point?.toString() || '');
-//             }
-            
-//             setDistance(currentHike.distance?.toString() || '');
-//             setCalories(currentHike.calories?.toString() || '');
-//         }
-//     }, [currentHike]);
-    
-//     const toggleChangable = () => {
-//         setChangable(prev => !prev);
-//     };
-    
-//     function handleCreateHikePress(event: GestureResponderEvent): void {
-//         if (!name.trim()) {
-//             showMessage({
-//                 message: "Please enter a hike name",
-//                 type: "warning",
-//             });
-//             return;
-//         }
-    
-//         if (!startPoint) {
-//             showMessage({
-//                 message: "Please select a starting point",
-//                 type: "warning",
-//             });
-//             return;
-//         }
-    
-//         // Parse coordinates if they're strings
-//         const startCoords = typeof currentHike?.start_point === 'object' 
-//             ? currentHike.start_point 
-//             : parseCoordinates(startPoint);
-            
-//         const destCoords = typeof currentHike?.dest_point === 'object' 
-//             ? currentHike.dest_point 
-//             : parseCoordinates(destPoint);
-        
-//         const parsedDistance = Number(distance);
-//         const parsedCalories = Number(calories);
-    
-//         const updatedHike: Hike = {
-//             id: currentHike?.id ?? Date.now(),
-//             name: name.trim(),
-//             nickname: currentHike?.nickname || null,
-//             created_at: currentHike?.created_at ?? new Date(),
-//             start_point: startCoords,
-//             dest_point: destCoords,
-//             distance: isNaN(parsedDistance) ? null : parsedDistance,
-//             calories: isNaN(parsedCalories) ? null : parsedCalories,
-//             geom: currentHike?.geom || null,
-//             user_id: currentHike?.user_id ?? 1,
-//         };
-    
-//         const exists = hikes.find(h => h.id === updatedHike.id);
-//         if (exists) {
-//             // Update existing hike
-//             updateHike(updatedHike);
-//         } else {
-//             // Add new hike
-//             addHike(updatedHike);
-//         }
-    
-//         showMessage({
-//             message: exists ? "Hike updated successfully!" : "Hike created successfully!",
-//             type: "success",
-//         });
-        
-//         // Reset current hike after saving
-//         setCurrentHike(null);
-        
-//         // Navigate back if needed
-//         if (!exists) {
-//             router.back();
-//         }
-//     }
-    
-//     // Navigate to map screen for location selection
-//     const openLocationPicker = (field: 'start_point' | 'dest_point') => {
-//         // Save current form data to currentHike before navigating
-//         updateCurrentHikeField('name', name);
-        
-//         if (typeof currentHike?.start_point !== 'object') {
-//             const parsedStart = parseCoordinates(startPoint);
-//             if (parsedStart) {
-//                 updateCurrentHikeField('start_point', parsedStart);
-//             }
-//         }
-        
-//         if (typeof currentHike?.dest_point !== 'object') {
-//             const parsedDest = parseCoordinates(destPoint);
-//             if (parsedDest) {
-//                 updateCurrentHikeField('dest_point', parsedDest);
-//             }
-//         }
-        
-//         const distanceNum = Number(distance);
-//         if (!isNaN(distanceNum)) {
-//             updateCurrentHikeField('distance', distanceNum);
-//         }
-        
-//         const caloriesNum = Number(calories);
-//         if (!isNaN(caloriesNum)) {
-//             updateCurrentHikeField('calories', caloriesNum);
-//         }
-        
-//         // Get current location value for this field
-//         const currentValue = field === 'start_point' 
-//             ? (typeof currentHike?.start_point === 'object' 
-//                 ? formatCoordinates(currentHike?.start_point as unknown as LatLng) 
-//                 : startPoint) 
-//             : (typeof currentHike?.dest_point === 'object' 
-//                 ? formatCoordinates(currentHike?.dest_point as unknown as LatLng) 
-//                 : destPoint);
-        
-//         router.push({
-//             pathname: '/hike/map',
-//             params: { 
-//                 returnToHike: '/hike/hike',
-//                 initialLocation: currentValue,
-//                 fieldType: field,
-//                 id: id ? id.toString() : currentHike?.id?.toString(),
-//                 editable: 'true'
-//             }
-//         });
-//     };
-
-//     return (
-//         <View style={styles.mainContainer}>
-//             <View style={styles.topSection}>
-//                 <TouchableOpacity onPress={toggleChangable} style={styles.gearButton}>
-//                     <FontAwesome name="gear" size={24} color="black" />
-//                 </TouchableOpacity>
-//             </View>
-
-//             <View style={styles.formSection}>
-//                 <View style={styles.container}>
-//                     <View style={styles.row}>
-//                         <Text style={styles.label}>Name:</Text>
-//                         {editable || changable ? (
-//                             <TextInput
-//                                 value={name}
-//                                 onChangeText={setName}
-//                                 style={styles.input}
-//                             />
-//                         ) : (
-//                             <Text style={styles.staticValue}>{hike?.name}</Text>
-//                         )}
-//                     </View>
-//                     <View style={styles.row}>
-//                         {editable || changable ? (
-//                             <View style={styles.emptyRow} />
-//                         ) : (
-//                             <>
-//                                 <Text style={styles.label}>Created:</Text>
-//                                 <Text style={styles.staticValue}>
-//                                     {hike?.created_at ? new Date(hike.created_at).toLocaleDateString() : ""}
-//                                 </Text>                        
-//                             </>                
-//                         )}
-//                     </View>
-//                     <View style={styles.row}>
-//                         <Text style={styles.label}>Start:</Text>
-//                         {editable || changable ? (
-//                             <TouchableOpacity 
-//                                 style={styles.locationInputContainer}
-//                                 onPress={() => openLocationPicker('start_point')}
-//                             >
-//                                 <TextInput
-//                                     value={startPoint}
-//                                     editable={false}
-//                                     style={styles.locationInput}
-//                                     placeholder="Tap to set location"
-//                                     placeholderTextColor={"black"}
-//                                 />
-//                                 <FontAwesome name="map-marker" size={20} color="#666" style={styles.mapIcon} />
-//                             </TouchableOpacity>
-//                         ) : (
-//                             <Text style={styles.staticValue}>{hike?.start_point?.toString()}</Text>
-//                         )}
-//                     </View>
-//                     <View style={styles.row}>
-//                         <Text style={styles.label}>Destination:</Text>
-//                         {editable || changable ? (
-//                             <TouchableOpacity 
-//                                 style={styles.locationInputContainer}
-//                                 onPress={() => openLocationPicker('dest_point')}
-//                             >
-//                                 <TextInput
-//                                     value={destPoint}
-//                                     editable={false}
-//                                     style={styles.locationInput}
-//                                     placeholder="Tap to set location"
-//                                     placeholderTextColor={"black"}
-
-//                                 />
-//                                 <FontAwesome name="map-marker" size={20} color="#666" style={styles.mapIcon} />
-//                             </TouchableOpacity>
-//                         ) : (
-//                             <Text style={styles.staticValue}>{hike?.dest_point?.toString()}</Text>
-//                         )}
-//                     </View>
-//                     <View style={styles.row}>
-//                         <Text style={styles.label}>Distance:</Text>
-//                         {editable || changable ? (
-//                             <TextInput
-//                                 value={distance}
-//                                 onChangeText={setDistance}
-//                                 style={styles.input}
-//                                 keyboardType="numeric"
-//                             />
-//                         ) : (
-//                             <Text style={styles.staticValue}>{hike?.distance}</Text>
-//                         )}
-//                     </View>
-//                     <View style={styles.row}>
-//                         <Text style={styles.label}>Calories:</Text>
-//                         {editable || changable ? (
-//                             <TextInput
-//                                 value={calories}
-//                                 onChangeText={setCalories}
-//                                 style={styles.input}
-//                                 keyboardType="numeric"
-//                             />
-//                         ) : (
-//                             <Text style={styles.staticValue}>{hike?.calories}</Text>
-//                         )}
-//                     </View>
-//                 </View>
-//             </View>
-            
-//             <View style={styles.bottomSection}>
-//                 {editable || changable ? (
-//                     <TouchableOpacity style={styles.button} onPress={handleCreateHikePress}>
-//                         <Text style={styles.buttonText}>{changable ? "Update Hike" : "Create Hike"}</Text>
-//                     </TouchableOpacity>
-//                 ) : (
-//                     <View style={{ height: 50 }} />
-//                 )}
-//             </View>
-//         </View>
-//     );
-// }
-
-// const styles = StyleSheet.create({
-//     mainContainer: {
-//         flex: 1,
-//         flexDirection: 'column',
-//     },
-//     topSection: {
-//         paddingTop: 70,
-//         alignItems: 'flex-end',
-//         paddingRight: 20,
-//         marginBottom: 10,
-//     },
-//     formSection: {
-//         flex: 1,
-//     },
-//     bottomSection: {
-//         padding: 20,
-//         alignItems: 'center',
-//     },
-//     emptyRow: {
-//         height: 30, // Match height of the Created row
-//     },
-//     gearButton: {
-//         marginBottom: 10,
-//     },
-//     button: {
-//         backgroundColor: 'lightgrey',
-//         borderRadius: 8,
-//         paddingVertical: 10,
-//         paddingHorizontal: 20,
-//         alignItems: 'center',
-//         justifyContent: 'center',
-//     },
-//     buttonText: {
-//         color: '#666',
-//         fontSize: 16,
-//         textAlign: 'center',
-//     },
-//     container: {
-//         justifyContent: 'center',
-//         margin: 10,
-//         paddingLeft: 30,
-//         padding: 10,
-//         backgroundColor: 'lightgray',
-//         borderRadius: 25, 
-//     },
-//     row: {
-//         flexDirection: 'row',
-//         justifyContent: 'space-between', 
-//         marginVertical: 8,
-//     },
-//     label: {
-//         fontWeight: 'bold',
-//         fontSize: 16,
-//         flex: 1,
-//     },
-//     value: {
-//         fontSize: 16,
-//         textAlign: 'left', 
-//         flex: 1, 
-//         marginLeft: -50,
-//     },
-//     input: {
-//         fontSize: 16,
-//         paddingVertical: 5,
-//         paddingHorizontal: 10,
-//         flex: 1,
-//         borderBottomWidth: 1,
-//         borderColor: 'gray',
-//     },
-//     locationInputContainer: {
-//         flexDirection: 'row',
-//         alignItems: 'center',
-//         flex: 1,
-//         borderBottomWidth: 1,
-//         borderColor: 'gray',
-//         paddingRight: 10,
-//     },
-//     locationInput: {
-//         fontSize: 16,
-//         paddingVertical: 5,
-//         paddingHorizontal: 10,
-//         flex: 1,
-//     },
-//     staticValue: {
-//         fontSize: 16,
-//         flex: 2,
-//         textAlign: 'right',
-//         color: '#333',
-//     },
-//     mapIcon: {
-//         marginRight: 5,
-//     }
-// });
-
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, GestureResponderEvent } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, GestureResponderEvent, ActivityIndicator } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { showMessage } from 'react-native-flash-message';
 import { useHikeStore, formatCoordinates, parseCoordinates, LatLng } from '../context/store';
 import { Hike } from '../types/hike';
+import { GOOGLE_MAPS_API, LOCAL_IP } from '../assets/constants';
 
-export default function HikeEdit({ hike }: { hike: Hike | null }) {
-    const { hikes, addHike, setHikes, currentHike, updateHike, updateCurrentHikeField, setCurrentHike } = useHikeStore();
-    const params = useLocalSearchParams();
-    const id = Number(params.id);
+export default function HikeNew() {
+    const { addHike, updateCurrentHikeField, setCurrentHike, currentHike, initNewHike } = useHikeStore();
+
     const [name, setName] = useState('');
     const [startPoint, setStartPoint] = useState('');
     const [destPoint, setDestPoint] = useState('');
     const [distance, setDistance] = useState('');
     const [calories, setCalories] = useState('');
+    const [isCalculating, setIsCalculating] = useState(false);
+    interface RouteInfo {
+    distance: string;
+    duration: string;
+    polyline: Geolocation;
+}
+
+const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
 
     useEffect(() => {
-        if (hike && hike.id) {
-            setCurrentHike(hike);
-        } else if (id && !currentHike) {
-            const existingHike = hikes.find(h => h.id === id);
-            if (existingHike) setCurrentHike(existingHike);
+        if (!currentHike) {
+            initNewHike();
         }
-    }, [hike, id]);
+    }, []);
 
-    useEffect(() => {
-        if (currentHike) {
-            setName(currentHike.name || '');
-            setStartPoint(formatCoordinates(currentHike.start_point as LatLng));
-            setDestPoint(formatCoordinates(currentHike.dest_point as LatLng));
-            setDistance(currentHike.distance?.toString() || '');
-            setCalories(currentHike.calories?.toString() || '');
+    useFocusEffect(
+        useCallback(() => {
+            if (currentHike) {
+                console.log('ahoj',currentHike)
+                if (currentHike.name) setName(currentHike.name);
+                if (currentHike.start_point) setStartPoint(formatCoordinates(currentHike.start_point as LatLng || String));
+                if (currentHike.dest_point) setDestPoint(formatCoordinates(currentHike.dest_point as LatLng || String));
+                if (currentHike.distance) setDistance(currentHike.distance.toString());
+                if (currentHike.calories) setCalories(currentHike.calories.toString());
+            }
+        }, [currentHike])
+    );
+
+    const geocodeAddress = async (address: string) => {
+        const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API}`
+        );
+        const data = await response.json();
+        if (data.status === 'OK' && data.results.length > 0) {
+            const { lat, lng } = data.results[0].geometry.location;
+            return { latitude: lat, longitude: lng };
+        } else {
+            return null;
         }
-    }, [currentHike]);
+    };
+    
+    const calculateWalkingPath = async () => {
+        if (!startPoint || !destPoint) {
+            showMessage({ message: 'Please set both start and destination points', type: 'warning' });
+            return;
+        }
+    
+        setIsCalculating(true);
+        try {
+            const startCoords = await geocodeAddress(startPoint);
+            const destCoords = await geocodeAddress(destPoint);
+    
+            if (!startCoords || !destCoords) {
+                showMessage({
+                    message: "Error",
+                    description: "Could not convert address to coordinates.",
+                    type: "danger",
+                    icon: "danger",
+                });
+                setIsCalculating(false);
+                return;
+            }
+    
+            const origin = `${startCoords.latitude},${startCoords.longitude}`;
+            const destination = `${destCoords.latitude},${destCoords.longitude}`;
+    
+            const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&mode=walking&key=${GOOGLE_MAPS_API}`;
+    
+            const response = await fetch(url);
+            const json = await response.json();
+    
+            if (json.status === 'OK' && json.routes.length > 0) {
+                const route = json.routes[0];
+                const distanceValue = route.legs[0].distance.value;
+                const distanceText = route.legs[0].distance.text;
+                const duration = route.legs[0].duration.text;
+                const polyline = route.overview_polyline.points;
+    
+                const distanceInKm = (distanceValue / 1000).toFixed(2);
+                setDistance(distanceInKm);
+                const estimatedCalories = Math.round(parseFloat(distanceInKm) * 65);
+                setCalories(estimatedCalories.toString());
+    
+                setRouteInfo({ distance: distanceText, duration, polyline });
+    
+                showMessage({ message: "Route calculated", type: "success", icon: "success" });
+            } else {
+                showMessage({ message: "Could not calculate route", type: "danger", icon: "danger" });
+            }
+        } catch (error) {
+            console.error('Error calculating route:', error);
+            showMessage({ message: "Error calculating route", type: "danger", icon: "danger" });
+        } finally {
+            setIsCalculating(false);
+        }
+    };
 
     function handleSave(event: GestureResponderEvent) {
         if (!name.trim()) {
@@ -438,35 +121,33 @@ export default function HikeEdit({ hike }: { hike: Hike | null }) {
         const startCoords = parseCoordinates(startPoint);
         const destCoords = parseCoordinates(destPoint);
 
-        const updated: Hike = {
-            id: currentHike?.id ?? Date.now(),
+        const newHike: Hike = {
+            id: Date.now(),
             name,
-            nickname: currentHike?.nickname ?? null,
-            created_at: currentHike?.created_at ?? new Date(),
+            nickname: null,
+            created_at: new Date(),
             start_point: startCoords,
             dest_point: destCoords,
             distance: Number(distance) || null,
             calories: Number(calories) || null,
-            geom: currentHike?.geom ?? null,
-            user_id: currentHike?.user_id ?? 1,
+            geom: routeInfo ? routeInfo.polyline : null, // Store the polyline for the route if available
+            user_id: 1,
         };
 
-        const exists = hikes.find(h => h.id === updated.id);
-        exists ? updateHike(updated) : addHike(updated);
-        showMessage({ message: exists ? 'Hike updated' : 'Hike created', type: 'success' });
+        addHike(newHike);
+        showMessage({ message: 'Hike created', type: 'success' });
         setCurrentHike(null);
         router.replace('/drawer/homeBar/home');
     }
 
     const openLocationPicker = (field: 'start_point' | 'dest_point') => {
-        updateCurrentHikeField('name', name);
+        updateCurrentHikeField('name', name); // So it's preserved when coming back
         router.push({
             pathname: '/drawer/hike/map',
             params: {
-                returnToHike: '/drawer/hike/hikeScreen',
+                returnToHike: '/drawer/hike/hikeNew',
                 initialLocation: field === 'start_point' ? startPoint : destPoint,
                 fieldType: field,
-                id: id?.toString(),
                 editable: 'true',
             },
         });
@@ -501,11 +182,42 @@ export default function HikeEdit({ hike }: { hike: Hike | null }) {
                 <FontAwesome name="map-marker" size={20} color="#666" style={styles.mapIcon} />
             </TouchableOpacity>
 
-            <Text>Distance:</Text>
-            <TextInput value={distance} onChangeText={setDistance} style={styles.input} keyboardType="numeric" />
+            {startPoint && destPoint && (
+                <TouchableOpacity 
+                    onPress={calculateWalkingPath} 
+                    style={[styles.button, { backgroundColor: '#4285F4', marginBottom: 16 }]}
+                    disabled={isCalculating}
+                >
+                    {isCalculating ? (
+                        <ActivityIndicator color="white" size="small" />
+                    ) : (
+                        <Text style={styles.buttonText}>Calculate Walking Route</Text>
+                    )}
+                </TouchableOpacity>
+            )}
+
+            {routeInfo && (
+                <View style={styles.routeInfo}>
+                    <Text style={styles.routeInfoText}>Walking distance: {routeInfo.distance}</Text>
+                    <Text style={styles.routeInfoText}>Estimated time: {routeInfo.duration}</Text>
+                </View>
+            )}
+
+            <Text>Distance (km):</Text>
+            <TextInput 
+                value={distance} 
+                onChangeText={setDistance} 
+                style={styles.input} 
+                keyboardType="numeric" 
+            />
 
             <Text>Calories:</Text>
-            <TextInput value={calories} onChangeText={setCalories} style={styles.input} keyboardType="numeric" />
+            <TextInput 
+                value={calories} 
+                onChangeText={setCalories} 
+                style={styles.input} 
+                keyboardType="numeric" 
+            />
 
             <TouchableOpacity onPress={handleSave} style={styles.button}>
                 <Text style={styles.buttonText}>Save</Text>
@@ -517,7 +229,7 @@ export default function HikeEdit({ hike }: { hike: Hike | null }) {
 const styles = StyleSheet.create({
     container: { padding: 16 },
     input: { borderWidth: 1, padding: 8, marginBottom: 12 },
-    button: { backgroundColor: 'black', padding: 12, borderRadius: 6 },
+    button: { backgroundColor: 'black', padding: 12, borderRadius: 6, marginBottom: 12 },
     buttonText: { color: 'white', textAlign: 'center' },
     locationRow: {
         flexDirection: 'row',
@@ -534,4 +246,14 @@ const styles = StyleSheet.create({
     mapIcon: {
         marginLeft: 8,
     },
+    routeInfo: {
+        backgroundColor: '#f0f0f0',
+        padding: 12,
+        borderRadius: 6,
+        marginBottom: 16,
+    },
+    routeInfoText: {
+        fontSize: 14,
+        marginBottom: 4,
+    }
 });

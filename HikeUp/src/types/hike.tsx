@@ -5,8 +5,8 @@ export interface Hike {
   name: string | null;
   nickname: string | null;
   created_at: string | Date;
-  start_point: number | LatLng | null;
-  dest_point: number | LatLng | null;
+  start_point: string | LatLng | null;
+  dest_point: string | LatLng | null;
   distance: number | null;
   geom: Geolocation | null;
   calories: number | null;
