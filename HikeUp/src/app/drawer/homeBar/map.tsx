@@ -9,7 +9,14 @@ import { router } from "expo-router";
 import { useThemeContext } from '../../../context/theme_context';
 import * as Location from 'expo-location';
 import MapWebView from '../../../components/offlineMap';
+import NetInfo from '@react-native-community/netinfo';
 
+
+type LatLng = {
+  latitude: number;
+  longitude: number;
+  timestamp?: number;
+  };
 
 const { width } = Dimensions.get('window');
 
@@ -19,6 +26,7 @@ const colors = theme.colors;
 const styles = getStyles(colors, isDark);
 const searchRef = useRef<any>(null);
 const mapRef = useRef<MapView>(null);
+const [isOfflineMode, setIsOfflineMode] = useState(false);
 
 const [points, setPoints] = useState<LatLng[]>([]);
 const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
@@ -76,6 +84,17 @@ const toggleTracking = () => {
     setTrackingActive(false);
   }
 };
+
+useEffect(() => {
+  const unsubscribe = NetInfo.addEventListener(state => {
+    if (!state.isConnected) {
+      setIsOfflineMode(true);
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
+
 // Request location permissions when component mounts
 useEffect(() => {
   const requestLocationPermission = async () => {
@@ -397,158 +416,176 @@ const zoom = (zoomIn: boolean) => {
 };
 
 return (
-  <MapWebView />);
-  // <View style={styles.container}>
-  //   <MapView
-  //     ref={mapRef}
-  //     provider={PROVIDER_GOOGLE}
-  //     style={StyleSheet.absoluteFillObject}
-  //     region={region}
-  //     //onRegionChangeComplete={setRegion}//if this is commented out everything works on ios
-  //     onPress={onMapPress}
-  //     customMapStyle={isDark ? darkMapStyle : []}
-  //     showsUserLocation={locationPermission} // Show the blue dot for user location
-  //     followsUserLocation={trackingActive} // Auto-follow user when tracking
-  //   >
-  //     {(routeCoords.length > 0 || points.length > 0) && (
-  //       <Polyline
-  //         coordinates={routeCoords.length > 0 ? routeCoords : points}
-  //         strokeColor="blue"
-  //         strokeWidth={4}
-  //       />
-  //     )}
-  //     {points.map((point, index) => (
-  //       <Marker key={index} coordinate={point} />
-  //     ))}
-  //     {/* Show path history when tracking */}
-  //     {trackingActive && pathHistory.length > 1 && (
-  //       <Polyline
-  //         coordinates={pathHistory}
-  //         strokeColor="#FF9800"
-  //         strokeWidth={4}
-  //       />
-  //     )}
-  //   </MapView>
+  <View style={{ flex: 1 }}>
+    {isOfflineMode ? (
+      <>
+      <MapWebView />
+      <TouchableOpacity
+        style={styles.toggleButton}
+        onPress={() => setIsOfflineMode(prev => !prev)}
+      >
+        <Text style={styles.toggleButtonText}>
+          {isOfflineMode ? 'Switch to Online Map' : 'Switch to Offline Map'}
+        </Text>
+      </TouchableOpacity>
+    </>
+    ) : (
+      <View style={styles.container}>
+        <MapView
+          ref={mapRef}
+          provider={PROVIDER_GOOGLE}
+          style={StyleSheet.absoluteFillObject}
+          region={region}
+          //onRegionChangeComplete={setRegion} // if this is commented out everything works on iOS
+          onPress={onMapPress}
+          customMapStyle={isDark ? darkMapStyle : []}
+          showsUserLocation={locationPermission}
+          followsUserLocation={trackingActive}
+        >
+          {(routeCoords.length > 0 || points.length > 0) && (
+            <Polyline
+              coordinates={routeCoords.length > 0 ? routeCoords : points}
+              strokeColor="blue"
+              strokeWidth={4}
+            />
+          )}
+          {points.map((point, index) => (
+            <Marker key={index} coordinate={point} />
+          ))}
+          {trackingActive && pathHistory.length > 1 && (
+            <Polyline
+              coordinates={pathHistory}
+              strokeColor="#FF9800"
+              strokeWidth={4}
+            />
+          )}
+        </MapView>
 
-  //   {/* Search Input */}
-  //   <View style={styles.searchContainer} pointerEvents="auto">
-  //     <GooglePlacesAutocomplete
-  //       ref={searchRef}
-  //       placeholder="Search"
-  //       fetchDetails
-  //       onPress={(data, details = null) => {
-  //         const loc = details?.geometry?.location;
-  //         if (loc) {
-  //           const newRegion = {
-  //             latitude: loc.lat,
-  //             longitude: loc.lng,
-  //             latitudeDelta: 0.01,
-  //             longitudeDelta: 0.01,
-  //           };
-  //           setRegion(newRegion);
-  //           mapRef.current?.animateToRegion(newRegion, 300);
-  //         }
-  //       }}
-  //       query={{ key: GOOGLE_MAPS_API, language: 'en' }}
-  //       enablePoweredByContainer={false}
-  //       styles={{
-  //         container: styles.searchBox, // affects outer container (dropdown positioning)
-  //         textInputContainer: styles.textInputContainer, // 🔧 affects actual touch area!
-  //         textInput: styles.searchInput,
-  //       }}
-  //       textInputProps={{
-  //         placeholderTextColor: colors.text,
-  //         style: [styles.searchInput, { color: colors.text }],
-  //       }}
-  //       renderRightButton={() => (
-  //         <TouchableOpacity
-  //           onPress={() => searchRef.current?.setAddressText('')}
-  //           style={styles.clearIconContainer}
-  //         >
-  //           <Ionicons name="close-circle" size={20} color={isDark ? "#ccc" : "#888"} />
-  //         </TouchableOpacity>
-  //       )}
-  //     />
-  //   </View>
-    
-  //   {/* Tracking Stats Panel */}
-  //   {trackingActive && (
-  //     <View style={styles.statsPanel}>
-  //       <View style={styles.statRow}>
-  //         <Ionicons name="speedometer-outline" size={20} color={isDark ? "#fff" : "#333"} />
-  //         <Text style={[styles.statText, { color: colors.text }]}>
-  //           {(currentSpeed * 3.6).toFixed(1)} km/h
-  //         </Text>
-  //       </View>
-  //       <View style={styles.statRow}>
-  //         <Ionicons name="trail-sign-outline" size={20} color={isDark ? "#fff" : "#333"} />
-  //         <Text style={[styles.statText, { color: colors.text }]}>
-  //           {totalDistance < 1000 
-  //             ? `${totalDistance.toFixed(0)} m` 
-  //             : `${(totalDistance/1000).toFixed(2)} km`}
-  //         </Text>
-  //       </View>
-  //     </View>
-  //   )}
+        {/* Search Input */}
+        <View style={styles.searchContainer} pointerEvents="auto">
+          <GooglePlacesAutocomplete
+            ref={searchRef}
+            placeholder="Search"
+            fetchDetails
+            onPress={(data, details = null) => {
+              const loc = details?.geometry?.location;
+              if (loc) {
+                const newRegion = {
+                  latitude: loc.lat,
+                  longitude: loc.lng,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                };
+                setRegion(newRegion);
+                mapRef.current?.animateToRegion(newRegion, 300);
+              }
+            }}
+            query={{ key: GOOGLE_MAPS_API, language: 'en' }}
+            enablePoweredByContainer={false}
+            styles={{
+              container: styles.searchBox,
+              textInputContainer: styles.textInputContainer,
+              textInput: styles.searchInput,
+            }}
+            textInputProps={{
+              placeholderTextColor: colors.text,
+              style: [styles.searchInput, { color: colors.text }],
+            }}
+            renderRightButton={() => (
+              <TouchableOpacity
+                onPress={() => searchRef.current?.setAddressText('')}
+                style={styles.clearIconContainer}
+              >
+                <Ionicons name="close-circle" size={20} color={isDark ? "#ccc" : "#888"} />
+              </TouchableOpacity>
+            )}
+          />
+        </View>
 
-  //   {/* Current Location & Tracking Buttons */}
-  //   <View style={styles.locationButtonsContainer}>
-  //     <TouchableOpacity 
-  //       style={[styles.myLocationButton, { marginBottom: 10 }]}
-  //       onPress={getCurrentLocation}
-  //     >
-  //       <Ionicons 
-  //         name="locate" 
-  //         size={24} 
-  //         color={isDark ? "#fff" : "#333"} 
-  //       />
-  //     </TouchableOpacity>
-      
-  //     <TouchableOpacity 
-  //       style={[
-  //         styles.myLocationButton, 
-  //         trackingActive && styles.trackingActiveButton
-  //       ]}
-  //       onPress={toggleTracking}
-  //     >
-  //       <Ionicons 
-  //         name={trackingActive ? "pause" : "play"} 
-  //         size={24} 
-  //         color={trackingActive ? "#fff" : (isDark ? "#fff" : "#333")} 
-  //       />
-  //     </TouchableOpacity>
-  //   </View>
+        {/* Tracking Stats */}
+        {trackingActive && (
+          <View style={styles.statsPanel}>
+            <View style={styles.statRow}>
+              <Ionicons name="speedometer-outline" size={20} color={isDark ? "#fff" : "#333"} />
+              <Text style={[styles.statText, { color: colors.text }]}>
+                {(currentSpeed * 3.6).toFixed(1)} km/h
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Ionicons name="trail-sign-outline" size={20} color={isDark ? "#fff" : "#333"} />
+              <Text style={[styles.statText, { color: colors.text }]}>
+                {totalDistance < 1000 
+                  ? `${totalDistance.toFixed(0)} m` 
+                  : `${(totalDistance/1000).toFixed(2)} km`}
+              </Text>
+            </View>
+          </View>
+        )}
 
-  //   {/* Zoom + Clear Controls */}
-  //   <View style={styles.controlsContainer} pointerEvents="box-none">
-  //     <View style={styles.zoomControls}>
-  //       <TouchableOpacity onPress={() => zoom(true)} style={styles.zoomButton}>
-  //         <Ionicons name="add" size={24} color={colors.text} />
-  //       </TouchableOpacity>
-  //       <TouchableOpacity onPress={() => zoom(false)} style={styles.zoomButton}>
-  //         <Ionicons name="remove" size={24} color={colors.text} />
-  //       </TouchableOpacity>
-  //     </View>
+        {/* Location and Tracking Buttons */}
+        <View style={styles.locationButtonsContainer}>
+          <TouchableOpacity 
+            style={[styles.myLocationButton, { marginBottom: 10 }]}
+            onPress={getCurrentLocation}
+          >
+            <Ionicons name="locate" size={24} color={isDark ? "#fff" : "#333"} />
+          </TouchableOpacity>
 
-  //     <TouchableOpacity
-  //       onPress={() => {
-  //         setPoints([]);
-  //         setRouteCoords([]);
-  //       }}
-  //       style={styles.clearButton}
-  //     >
-  //       <Text style={{ color: 'white', fontSize: 12 }}>Clear</Text>
-  //     </TouchableOpacity>
-  //   </View>
+          <TouchableOpacity 
+            style={[
+              styles.myLocationButton, 
+              trackingActive && styles.trackingActiveButton
+            ]}
+            onPress={toggleTracking}
+          >
+            <Ionicons 
+              name={trackingActive ? "pause" : "play"} 
+              size={24} 
+              color={trackingActive ? "#fff" : (isDark ? "#fff" : "#333")} 
+            />
+          </TouchableOpacity>
+        </View>
 
-  //   {/* Save Hike */}
-  //   {points.length === 2 && (
-  //     <TouchableOpacity onPress={createHike} style={styles.saveButton}>
-  //       <Text style={{ color: 'white' }}>Create Hike</Text>
-  //     </TouchableOpacity>
-  //   )}
-  // </View>
-// );  
+        {/* Zoom + Clear Controls */}
+        <View style={styles.controlsContainer} pointerEvents="box-none">
+          <View style={styles.zoomControls}>
+            <TouchableOpacity onPress={() => zoom(true)} style={styles.zoomButton}>
+              <Ionicons name="add" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => zoom(false)} style={styles.zoomButton}>
+              <Ionicons name="remove" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => {
+              setPoints([]);
+              setRouteCoords([]);
+            }}
+            style={styles.clearButton}
+          >
+            <Text style={{ color: 'white', fontSize: 12 }}>Clear</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+          style={[styles.clearButton,{marginTop: 10}]}
+          onPress={() => setIsOfflineMode(prev => !prev)}
+        >
+          <Text style={{ color: 'white', fontSize: 12 }}>
+            {isOfflineMode ? 'google' : 'osm'}
+          </Text>
+        </TouchableOpacity>
+        </View>
+        {/* Save Hike */}
+        {points.length === 2 && (
+          <TouchableOpacity onPress={createHike} style={styles.saveButton}>
+            <Text style={{ color: 'white' }}>Create Hike</Text>
+          </TouchableOpacity>
+        )}
+        
+      </View>
+    )}
+  </View>
+);
 }
 
 const getStyles = (colors: any, isDark: boolean) =>
@@ -679,10 +716,18 @@ StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
+  toggleButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: isDark ? '#ff6b6b' : '#f44336',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+  },
+  toggleButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
 });
-
-type LatLng = {
-latitude: number;
-longitude: number;
-timestamp?: number;
-};

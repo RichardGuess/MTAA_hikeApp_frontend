@@ -4,58 +4,90 @@
     "slug": "HikeUp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/images/icon.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.xgersr.HikeUp",
-      "googleServicesFile": "./GoogleService-Info.plist"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.xgersr.HikeUp",
-      "googleServicesFile": "./google-services.json",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyB3hQf1jpnDFgVdGsAISpFj21Yqp493qtE"
-        }
-      }
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static"
+        "usesNonExemptEncryption": false
+      },
+      "notification": {
+        "ios": {
+          "push": {
+            "production": false
           }
         }
-      ],
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth",
-      "react-native-maps",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./src/assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
+      },
+      "android": {
+        "adaptiveIcon": {
+          "foregroundImage": "./assets/images/adaptive-icon.png",
           "backgroundColor": "#ffffff"
+        },
+        "package": "com.xgersr.HikeUp",
+        "googleServicesFile": "./google-services.json",
+        "config": {
+          "googleMaps": {
+            "apiKey": "AIzaSyB3hQf1jpnDFgVdGsAISpFj21Yqp493qtE"
+          }
         }
-      ]
-    ],
-    "experiments": {
-      "typedRoutes": true
-    }
+      },
+      "web": {
+        "bundler": "metro",
+        "output": "static",
+        "favicon": "./assets/images/favicon.png"
+      },
+      "plugins": [
+        "expo-router",
+        [
+          "expo-build-properties",
+          {
+            "ios": {
+              "useFrameworks": "static"
+            }
+          }
+        ],
+        "@react-native-firebase/app",
+        "@react-native-firebase/auth",
+        "react-native-maps",
+        [
+          "expo-splash-screen",
+          {
+            "image": "./assets/images/splash-icon.png",
+            "imageWidth": 200,
+            "resizeMode": "contain",
+            "backgroundColor": "#ffffff"
+          }
+        ],
+        [
+          "expo-notifications",
+          {
+            "icon": "./assets/images/notification-icon.png",
+            "color": "#000000",
+            "sounds": [
+              "default"
+            ]
+          }
+        ]
+      ],
+      "experiments": {
+        "typedRoutes": true
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5d386258-60d2-4334-9b94-381b353967c8"
+      }
+    },
+    "owner": "xsintal",
+    "plugins": [
+      "expo-asset"
+    ]
   }
 }
