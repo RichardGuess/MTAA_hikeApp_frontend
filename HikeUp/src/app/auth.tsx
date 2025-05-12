@@ -83,16 +83,15 @@ export default function AuthScreen() {
       const pushToken = await registerForPushNotificationsAsync();
       console.log("Expo Push Token:", pushToken);
 
-      if (pushToken) {
-        await fetch(`${LOCAL_IP}/api/users/push-token`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            uid: firebaseUser.uid,
-            token: pushToken,
-          }),
-        });
-      }
+      await fetch(`${LOCAL_IP}/api/users/push-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: firebaseUser.email,
+          token: pushToken,
+        }),
+      });
+
 
 
       // check if user already exists in Firebase Auth
