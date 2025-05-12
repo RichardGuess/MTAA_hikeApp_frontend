@@ -23,7 +23,11 @@ const { width } = Dimensions.get('window');
 export default function MapScreen() {
 const { theme, isDark } = useThemeContext();
 const colors = theme.colors;
-const styles = getStyles(colors, isDark);
+
+const { width, height } = Dimensions.get('window');
+const isTablet = Math.min(width, height) >= 600;
+
+const styles = getStyles(colors, isDark, isTablet);
 const searchRef = useRef<any>(null);
 const mapRef = useRef<MapView>(null);
 const [isOfflineMode, setIsOfflineMode] = useState(false);
@@ -70,6 +74,8 @@ const darkMapStyle = [
     stylers: [{ color: '#000000' }]
   }
 ];
+
+
 
 // Toggle tracking mode
 const toggleTracking = () => {
@@ -588,7 +594,7 @@ return (
 );
 }
 
-const getStyles = (colors: any, isDark: boolean) =>
+const getStyles = (colors: any, isDark: boolean, isTablet: boolean) =>
 StyleSheet.create({
   container: { flex: 1 },
   searchContainer: {
@@ -637,10 +643,11 @@ StyleSheet.create({
   },
   controlsContainer: {
     position: 'absolute',
-    bottom: 100,
-    right: 10,
+    bottom: isTablet ? 120 : 100,
+    right: isTablet ? 20 : 10,
     alignItems: 'center',
   },
+
   zoomControls: {
     backgroundColor: colors.card,
     borderRadius: 8,
@@ -648,28 +655,29 @@ StyleSheet.create({
     marginBottom: 10,
   },
   zoomButton: {
-    padding: 10,
+    padding: isTablet ? 14 : 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   clearButton: {
     backgroundColor: isDark ? '#ff6b6b' : '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingVertical: isTablet ? 12 : 8,
+    paddingHorizontal: isTablet ? 18 : 12,
+    borderRadius: 10,
   },
   saveButton: {
     position: 'absolute',
-    bottom: 40,
-    left: 10,
+    bottom: isTablet ? 50 : 40,
+    left: isTablet ? 30 : 10,
     backgroundColor: '#2196F3',
-    padding: 10,
-    borderRadius: 8,
+    paddingVertical: isTablet ? 14 : 10,
+    paddingHorizontal: isTablet ? 20 : 10,
+    borderRadius: 10,
   },
   myLocationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: isTablet ? 60 : 44,
+    height: isTablet ? 60 : 44,
+    borderRadius: isTablet ? 30 : 22,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,

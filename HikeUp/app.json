@@ -18,6 +18,9 @@
       "config": {
         "usesNonExemptEncryption": false
       },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "notification": {
         "ios": {
           "push": {
@@ -64,6 +67,13 @@
             "resizeMode": "contain",
             "backgroundColor": "#ffffff"
           }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/images/notification-icon.png",
+          "color": "#000000"
+        }
         ],
         [
           "expo-notifications",
@@ -78,6 +88,19 @@
       ],
       "experiments": {
         "typedRoutes": true
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#ffffff"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    },
+    "projectId": "1315bdf5-06c1-4142-a19f-499e1596b32d",
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/1315bdf5-06c1-4142-a19f-499e1596b32d"
       }
     },
     "extra": {
