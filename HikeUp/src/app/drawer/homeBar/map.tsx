@@ -75,8 +75,6 @@ const darkMapStyle = [
   }
 ];
 
-
-
 // Toggle tracking mode
 const toggleTracking = () => {
   if (!trackingActive) {
@@ -314,8 +312,7 @@ const fetchRoute = async () => {
     const res = await fetch(url);
     const text = await res.text();
     const json = JSON.parse(text);
-    console.log('Directions API result:', JSON.stringify(json));
-
+    
     if (json.routes?.length) {
       const polyline = json.routes[0].overview_polyline.points;
       const coords = decodePolyline(polyline);
@@ -445,8 +442,10 @@ return (
           //onRegionChangeComplete={setRegion} // if this is commented out everything works on iOS
           onPress={onMapPress}
           customMapStyle={isDark ? darkMapStyle : []}
-          showsUserLocation={locationPermission}
-          followsUserLocation={trackingActive}
+          //showsUserLocation={locationPermission}
+          //followsUserLocation={trackingActive}
+          mapType="standard" // Add this line
+
         >
           {(routeCoords.length > 0 || points.length > 0) && (
             <Polyline

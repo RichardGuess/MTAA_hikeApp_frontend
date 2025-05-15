@@ -1,11 +1,15 @@
 import { create } from 'zustand';
 import { Hike } from '../types/hike';
 
-// Define the type for location coordinates
 export type LatLng = {
   latitude: number;
   longitude: number;
 };
+
+export interface GeoJSONRoute {
+  type: string;
+  coordinates: [number, number][];
+}
 
 // Format coordinates to string
 export const formatCoordinates = (coords: LatLng | string | null): string => {
@@ -17,8 +21,6 @@ export const formatCoordinates = (coords: LatLng | string | null): string => {
   
   return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
 };
-
-
 
 // Parse coordinates from string
 export const parseCoordinates = (coordsStr: string | null): LatLng | null => {
@@ -42,8 +44,10 @@ export const parseCoordinates = (coordsStr: string | null): LatLng | null => {
 interface HikeState {
   hikes: Hike[];
   currentHike: Hike | null;
-  
+  currentHikePolyline: GeoJSONRoute;
   // Actions
+  setCurrentHikePolyline: (route: GeoJSONRoute) => void;
+  clearHikePolyline: () => void;  
   setHikes: (hikes: Hike[]) => void;
   addHike: (hike: Hike) => void;
   updateHike: (updatedHike: Hike) => void;
@@ -56,10 +60,22 @@ interface HikeState {
 export const useHikeStore = create<HikeState>((set) => ({
   hikes: [],
   currentHike: null,
-  
+
+  currentHikePolyline: { type: "LineString", coordinates: [] },
+
+  setCurrentHikePolyline: (route) =>
+    set(() => ({
+      currentHikePolyline: route,
+    })),
+
+  clearHikePolyline: () =>
+    set(() => ({
+      currentHikePolyline: { type: "LineString", coordinates: [] },
+    })),
+
   setHikes: (hikes) => set({ hikes }),
   
-  addHike: (hike) => set((state) => ({ 
+  addHike: (hike) => set((state) => ({
     hikes: [...state.hikes, hike],
     currentHike: null // Reset current hike after adding
   })),

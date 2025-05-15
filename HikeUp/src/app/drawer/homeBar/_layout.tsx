@@ -51,10 +51,9 @@ export default function HomeTabsLayout() {
     >
       <Tabs.Screen name="home" options={{ title: "Home" }} />
       <Tabs.Screen name="map" options={{ title: "Map" }} />
-      <Tabs.Screen
-        name="Friends"
-        options={{ title: "Friends", tabBarLabel: "Friends" }}
-      />
+      <Tabs.Screen name="Friends" options={{ title: "Friends", tabBarLabel: "Friends" }}/>
+      <Tabs.Screen name="chat/[chatId]" options={{tabBarItemStyle: {display: 'none'}}}/>
+
     </Tabs>
   );
 }

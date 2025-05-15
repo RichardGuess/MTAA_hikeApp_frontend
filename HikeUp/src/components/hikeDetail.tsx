@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import auth from "@react-native-firebase/auth";
 import { LOCAL_IP } from '../assets/constants';
+import { useHikeStore } from '../context/store';
+
 
 type hikeSpecsProps = {
     hike: Hike | null;
@@ -20,7 +22,11 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
     const [calories, setCalories] = useState(hike?.calories?.toString() || '');
     const [editableState, setEditableState] = useState(editable || false);
 
+    const hikePolyline = useHikeStore((state: any) => state.hikePolyline);
+    const { setCurrentHikePolyline } = useHikeStore.getState();
 
+
+  
     const [fadeAnim] = useState(new Animated.Value(0));
 
     const params = useLocalSearchParams();
@@ -34,7 +40,6 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
         setDistance(hike?.distance?.toString() || '');
         setCalories(hike?.calories?.toString() || '');
     }, [hike, id]);  // Dependency on `hike` or `id` ensures reset when either changes
-
 
     const sendDataToServer = async () => {
         try{
@@ -85,6 +90,27 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
             useNativeDriver: true,
         }).start();
     }, [editableState]);
+
+    function handleShowOnMapPress() {
+        console.log('show on map button presed');
+        console.log(hike?.geom);
+        if (hike?.geom !== null && hike?.geom !== undefined) {
+            setCurrentHikePolyline(hike?.geom);//global parameter in store
+        }
+        router.replace('/drawer/homeBar/map')
+    }
+
+    function handlePhysicalStatsPress(event: GestureResponderEvent): void {
+        throw new Error('Function not implemented.');
+    }
+
+    function handleAddFriendsPress(event: GestureResponderEvent): void {
+        throw new Error('Function not implemented.');
+    }
+
+    function handleHikeChatPress(event: GestureResponderEvent): void {
+        throw new Error('Function not implemented.');
+    }
 
     return (
         <View style={{ flex:1, justifyContent: 'space-between' }}>
@@ -171,6 +197,26 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                         )}
                     </View>
                 </View>
+                <View style={styles.showOnMapContainer}>
+                    <TouchableOpacity style={styles.showOnMapButton} onPress={handleShowOnMapPress}>
+                        <Text style={{ fontSize: 16, textAlign: 'center' }}>Show hike on map</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.showOnMapContainer}>
+                    <TouchableOpacity style={styles.showOnMapButton} onPress={handleAddFriendsPress}>
+                        <Text style={{ fontSize: 16, textAlign: 'center' }}>Add friends to hike</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.showOnMapContainer}>
+                    <TouchableOpacity style={styles.showOnMapButton} onPress={handlePhysicalStatsPress}>
+                        <Text style={{ fontSize: 16, textAlign: 'center' }}>Physical stats</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.showOnMapContainer}>
+                    <TouchableOpacity style={styles.showOnMapButton} onPress={handleHikeChatPress}>
+                        <Text style={{ fontSize: 16, textAlign: 'center' }}>Hike chat</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
             <View style={{justifyContent: 'flex-end'}}>
                 <View style={styles.buttonContainer}>
@@ -188,6 +234,17 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
 }
 
 const styles = StyleSheet.create({
+    showOnMapContainer: {
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    showOnMapButton: {
+        width: '50%',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        backgroundColor: '#ddd',
+        borderRadius: 10 
+    },
     buttonContainer: {
         paddingBottom: 20,
         alignSelf: 'center',

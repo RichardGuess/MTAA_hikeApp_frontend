@@ -1,4 +1,5 @@
 import { LatLng } from "react-native-maps";
+import { GeoJSONRoute } from '../context/store'
 
 export interface Hike {
   id: number;
@@ -8,7 +9,7 @@ export interface Hike {
   start_point: string | LatLng | null;
   dest_point: string | LatLng | null;
   distance: number | null;
-  geom: Geolocation | null;
+  geom: GeoJSONRoute | null;
   calories: number | null;
   user_id: number;  
 }
