@@ -12,9 +12,10 @@ import { useHikeStore } from '../context/store';
 type hikeSpecsProps = {
     hike: Hike | null;
     editable: boolean;
+    onUpdate: (data: Hike) => void;
 };
 
-export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
+export default function HikeSpecs({ hike, editable, onUpdate }: hikeSpecsProps) {
     const [name, setName] = useState(hike?.name || 'new hike');
     const [startPoint, setStartPoint] = useState(hike?.start_point?.toString() || '');
     const [destPoint, setDestPoint] = useState(hike?.dest_point?.toString() || '');
@@ -25,8 +26,6 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
     const hikePolyline = useHikeStore((state: any) => state.hikePolyline);
     const { setCurrentHikePolyline } = useHikeStore.getState();
 
-
-  
     const [fadeAnim] = useState(new Animated.Value(0));
 
     const params = useLocalSearchParams();
@@ -79,6 +78,9 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
 
     function handleHikeUpdatePress() {
         sendDataToServer();
+        if (hike) {
+            onUpdate(hike);
+        }
     }
 
     //fade out animation for created at:
@@ -133,7 +135,7 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                                 style={styles.input}
                             />
                         ) : (
-                            <Text style={styles.value}>{hike?.name}</Text>
+                            <Text style={styles.value}>{name}</Text>
                         )}
                     </View>
                     <View style={styles.row}>
@@ -154,7 +156,7 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                                 keyboardType="numeric"
                             />
                         ) : (
-                            <Text style={styles.value}>{hike?.start_point ? hike.start_point.toString() : ''}</Text>
+                            <Text style={styles.value}>{startPoint.toString()}</Text>
                         )}
                     </View>
                     <View style={styles.row}>
@@ -167,7 +169,7 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                                 keyboardType="numeric"
                             />
                         ) : (
-                            <Text style={styles.value}>{hike?.dest_point ? hike.dest_point.toString() : ''}</Text>
+                            <Text style={styles.value}>{destPoint.toString()}</Text>
                         )}
                     </View>
                     <View style={styles.row}>
@@ -180,7 +182,7 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                                 keyboardType="numeric"
                             />
                         ) : (
-                            <Text style={styles.value}>{hike?.distance}</Text>
+                            <Text style={styles.value}>{distance}</Text>
                         )}
                     </View>
                     <View style={styles.row}>
@@ -193,7 +195,7 @@ export default function HikeSpecs({ hike, editable }: hikeSpecsProps) {
                                 keyboardType="numeric"
                             />
                         ) : (
-                            <Text style={styles.value}>{hike?.calories}</Text>
+                            <Text style={styles.value}>{calories}</Text>
                         )}
                     </View>
                 </View>

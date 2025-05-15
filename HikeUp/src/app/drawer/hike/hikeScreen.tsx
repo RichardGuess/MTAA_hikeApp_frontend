@@ -65,6 +65,7 @@ export default function HikeScreen() {
       console.error("Failed to load hike from AsyncStorage:", error);
     }
   };
+
   const fetchData = async () => {
     try {
       const firebaseToken = await auth().currentUser?.getIdToken();
@@ -87,13 +88,21 @@ export default function HikeScreen() {
       console.error("Error fetching data:", error);
     }
   };
+  
+  const handleUpdate = async (hike: Hike) => {
+    try {
+      await AsyncStorage.mergeItem(`hike-${id}`, JSON.stringify(hike))
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   return (
     <View style={{ flex: 1, padding: 16 }}>
       { (mode === "add")?(
         <HikeEdit />
       ) : (mode === 'view') ? (
-        <HikeDetail hike={data} editable={canEdit} />
+        <HikeDetail hike={data} editable={canEdit} onUpdate={handleUpdate} />
       ) : (
         <Text>Loading hike details...</Text>
       )}
