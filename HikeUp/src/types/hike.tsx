@@ -9,7 +9,7 @@ export interface Hike {
   start_point: string | LatLng | null;
   dest_point: string | LatLng | null;
   distance: number | null;
-  geom: GeoJSONRoute | null;
+  geom: GeoJSONRoute | string | null;
   calories: number | null;
   user_id: number;  
 }

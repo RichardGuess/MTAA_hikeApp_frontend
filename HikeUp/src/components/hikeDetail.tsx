@@ -96,7 +96,7 @@ export default function HikeSpecs({ hike, editable, onUpdate }: hikeSpecsProps) 
     function handleShowOnMapPress() {
         console.log('show on map button presed');
         console.log(hike?.geom);
-        if (hike?.geom !== null && hike?.geom !== undefined) {
+        if (hike?.geom !== null && hike?.geom !== undefined && typeof hike?.geom !== 'string') {
             setCurrentHikePolyline(hike?.geom);//global parameter in store
         }
         router.replace('/drawer/homeBar/map')
@@ -106,8 +106,14 @@ export default function HikeSpecs({ hike, editable, onUpdate }: hikeSpecsProps) 
         throw new Error('Function not implemented.');
     }
 
-    function handleAddFriendsPress(event: GestureResponderEvent): void {
-        throw new Error('Function not implemented.');
+    function handleAddFriendsPress(){
+        router.push({
+            pathname: '/drawer/homeBar/Friends/friendsList',
+            params:{
+                fromHike: 'true',
+                hikeId: hike?.id.toString()
+            }
+    });
     }
 
     function handleHikeChatPress(event: GestureResponderEvent): void {

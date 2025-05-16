@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -10,9 +10,12 @@ import {
   TouchableOpacity,
   Alert
 } from "react-native";
+import { useIsFocused } from '@react-navigation/native';
 import auth from "@react-native-firebase/auth";
 import { LOCAL_IP } from "../../../../assets/constants";
 import { useThemeContext } from "../../../../context/theme_context";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { showMessage } from "react-native-flash-message";
 
 type Friend = {
   id: number;
@@ -35,10 +38,67 @@ export default function FriendsListScreen() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Friend[]>([]);
 
+  let { fromHike, hikeId } = useLocalSearchParams() as {
+    fromHike?: string,
+    hikeId: string,
+  };
+  const [isFromHike, setIsFromHike] = useState(false);
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (fromHike === 'true' && isFocused) {
+      setIsFromHike(true);
+
+      router.setParams({ fromHike: undefined });
+    } else if (!isFocused) {
+      setIsFromHike(false);
+    }
+  }, [fromHike, isFocused]);
+
   const { theme } = useThemeContext();
   const colors = theme.colors;
   const styles = getStyles(colors);
 
+  const sendDataToServer = async (user_id:number) => {
+    try {
+      const user = auth().currentUser
+      const firebaseToken = await user?.getIdToken();
+      const userEmail = user?.email;
+      const hike_id = parseInt(hikeId, 10)
+
+      if (!firebaseToken) {
+          throw new Error('User is not authenticated');
+      }
+  
+      const data = {
+          user_id,
+          hike_id
+      };
+
+      const response = await fetch(`${LOCAL_IP}/api/friends/join-hike`, {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${firebaseToken}`,
+          },
+          body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Server responded with error:", text);
+        if (response.status === 409){
+          showMessage({ 
+            message: 'user already joined the hike',
+            type: 'warning' 
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating hike:", error);
+    }
+  };
+  
   const fetchAllData = async () => {
     try {
       const currentUser = auth().currentUser;
@@ -169,6 +229,10 @@ export default function FriendsListScreen() {
     );
   }
 
+  function handleAddToHike(item: Friend) {
+    sendDataToServer(item.id);
+  }
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -231,13 +295,23 @@ export default function FriendsListScreen() {
           data={friends}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View style={styles.friendItem}>
+            <View style={[styles.friendItem, { flexDirection: 'row', alignItems: 'center' }]}>
               {item.profile_picture ? (
                 <Image source={{ uri: item.profile_picture }} style={styles.profile_picture} />
               ) : (
                 <View style={styles.profile_picturePlaceholder} />
               )}
               <Text style={styles.text}>{item.name || `User ${item.id}`}</Text>
+              {isFromHike ? (
+              <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
+                <TouchableOpacity onPress={() => handleAddToHike(item)}>
+                  <Text style={{ color: 'blue' }}>+ Add to hike</Text>
+                </TouchableOpacity>
+              </View>
+              ) : (
+                <View style={{display: 'none'}}></View>
+              )
+              }
             </View>
           )}
         />
@@ -279,6 +353,7 @@ const getStyles = (colors: any) =>
       backgroundColor: colors.card,
     },
     friendItem: {
+      display: 'flex',
       flexDirection: "row",
       alignItems: "center",
       padding: 12,

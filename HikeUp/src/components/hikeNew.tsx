@@ -21,7 +21,7 @@ export default function HikeNew() {
     interface RouteInfo {
     distance: string;
     duration: string;
-    polyline: Geolocation;
+    polyline: string;
 }
 
 const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
@@ -105,7 +105,10 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
     
     const calculateWalkingPath = async () => {
         if (!startPoint || !destPoint) {
-            showMessage({ message: 'Please set both start and destination points', type: 'warning' });
+            showMessage({ 
+                message: 'Please set both start and destination points',
+                type: 'warning' 
+            });
             return;
         }
     
