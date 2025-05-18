@@ -19,9 +19,9 @@ export default function HikeNew() {
     const [calories, setCalories] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
     interface RouteInfo {
-    distance: string;
-    duration: string;
-    polyline: string;
+        distance: string;
+        duration: string;
+        polyline: string;
 }
 
 const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
@@ -35,6 +35,7 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
     useFocusEffect(
         useCallback(() => {
             if (currentHike) {
+                console.log('exists')
                 if (currentHike.name) setName(currentHike.name);
                 if (currentHike.start_point) setStartPoint(formatCoordinates(currentHike.start_point as LatLng || String));
                 if (currentHike.dest_point) setDestPoint(formatCoordinates(currentHike.dest_point as LatLng || String));
@@ -203,6 +204,17 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
         });
     };
 
+    function handleExit() {
+        setCurrentHike(null); // clear store
+        setName('');
+        setStartPoint('');
+        setDestPoint('');
+        setDistance('');
+        setCalories('');
+        setRouteInfo(null);
+        router.replace('/drawer/homeBar/home');
+    }
+
     return (
         <View style={styles.container}>
             <Text>Name:</Text>
@@ -273,6 +285,9 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
 
             <TouchableOpacity onPress={handleSave} style={styles.button}>
                 <Text style={styles.buttonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleExit} style={styles.button}>
+                <Text style={styles.buttonText}>Discard</Text>
             </TouchableOpacity>
         </View>
     );
