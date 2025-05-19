@@ -7,6 +7,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import auth from "@react-native-firebase/auth";
 import { LOCAL_IP } from '../assets/constants';
 import { useHikeStore } from '../context/store';
+import EvilIcons from '@expo/vector-icons/EvilIcons';
 
 
 type hikeSpecsProps = {
@@ -117,6 +118,10 @@ export default function HikeSpecs({ hike, editable, onUpdate }: hikeSpecsProps) 
     }
 
     function handleHikeChatPress(event: GestureResponderEvent): void {
+        throw new Error('Function not implemented.');
+    }
+
+    function handleStarttracking(event: GestureResponderEvent): void {
         throw new Error('Function not implemented.');
     }
 
@@ -233,7 +238,10 @@ export default function HikeSpecs({ hike, editable, onUpdate }: hikeSpecsProps) 
                         <Text style={styles.buttonText}>Update hike</Text>
                     </TouchableOpacity>
                     ) : (
-                    <View style={{ display: 'none' }} />
+                    <TouchableOpacity style={styles.startTrackerButton} onPress={handleStarttracking}>
+                        <Text>Start tracker</Text>
+                        <EvilIcons name="play" size={24} color="black" />
+                    </TouchableOpacity>
                     )}
                 </View>
             </View>
@@ -242,6 +250,13 @@ export default function HikeSpecs({ hike, editable, onUpdate }: hikeSpecsProps) 
 }
 
 const styles = StyleSheet.create({
+    startTrackerButton: {
+        flexDirection: 'row',
+        backgroundColor: "#98fb98",
+        borderRadius: 10,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+    },
     showOnMapContainer: {
         alignItems: 'center',
         marginTop: 20,

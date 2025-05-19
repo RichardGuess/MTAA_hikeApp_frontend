@@ -442,8 +442,8 @@ return (
           //onRegionChangeComplete={setRegion} // if this is commented out everything works on iOS
           onPress={onMapPress}
           customMapStyle={isDark ? darkMapStyle : []}
-          //showsUserLocation={locationPermission}
-          //followsUserLocation={trackingActive}
+          showsUserLocation={locationPermission}
+          followsUserLocation={trackingActive}
           mapType="standard" // Add this line
 
         >
@@ -725,7 +725,7 @@ StyleSheet.create({
   },
   toggleButton: {
     position: 'absolute',
-    bottom: 30,
+    top: 100,
     right: 20,
     backgroundColor: isDark ? '#ff6b6b' : '#f44336',
     paddingVertical: 10,

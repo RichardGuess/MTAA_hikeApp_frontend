@@ -5,8 +5,10 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { showMessage } from 'react-native-flash-message';
 import { useHikeStore, formatCoordinates, parseCoordinates, LatLng } from '../context/store';
 import { Hike } from '../types/hike';
-import { GOOGLE_MAPS_API, LOCAL_IP } from '../assets/constants';
+import { GOOGLE_MAPS_API, LOCAL_IP, DIRECTIONS_API } from '../assets/constants';
 import auth from "@react-native-firebase/auth";
+import { Directions } from 'react-native-gesture-handler';
+import { designName } from 'expo-device';
 
 
 export default function HikeNew() {
@@ -35,7 +37,6 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
     useFocusEffect(
         useCallback(() => {
             if (currentHike) {
-                console.log('exists')
                 if (currentHike.name) setName(currentHike.name);
                 if (currentHike.start_point) setStartPoint(formatCoordinates(currentHike.start_point as LatLng || String));
                 if (currentHike.dest_point) setDestPoint(formatCoordinates(currentHike.dest_point as LatLng || String));
@@ -129,27 +130,34 @@ const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
                 return;
             }
     
-            const origin = `${startCoords.latitude},${startCoords.longitude}`;
-            const destination = `${destCoords.latitude},${destCoords.longitude}`;
-    
-            const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&mode=walking&key=${GOOGLE_MAPS_API}`;
+            const origin = `${startCoords.longitude}, ${startCoords.latitude}`;
+            const destination = `${destCoords.longitude}, ${destCoords.latitude}`;
+            console.log(origin,destination)
+            const url = `https://api.openrouteservice.org/v2/directions/foot-hiking?api_key=${DIRECTIONS_API}&start=${origin}&end=${destination}`;
             const response = await fetch(url);
             const json = await response.json();
-    
-            if (json.status === 'OK' && json.routes.length > 0) {
-                const route = json.routes[0];
-                const distanceValue = route.legs[0].distance.value;
-                const distanceText = route.legs[0].distance.text;
-                const duration = route.legs[0].duration.text;
-                const polyline = route.overview_polyline.points;
-    
-                const distanceInKm = (distanceValue / 1000).toFixed(2);
+            console.log(response,json)
+            if (response.ok && json.features && json.features.length > 0) {
+                const feature = json.features[0];
+                const coordinates = feature.geometry.coordinates; // [lon, lat] array of points
+            
+                const summary = feature.properties.summary;
+                const distanceInMeters = summary.distance;
+                const durationInSeconds = summary.duration;
+            
+                const distanceInKm = (distanceInMeters / 1000).toFixed(2);
+                const durationInMin = Math.round(durationInSeconds / 60);
+            
                 setDistance(distanceInKm);
                 const estimatedCalories = Math.round(parseFloat(distanceInKm) * 65);
                 setCalories(estimatedCalories.toString());
-    
-                setRouteInfo({ distance: distanceText, duration, polyline });
-    
+            
+                setRouteInfo({ 
+                    distance: `${distanceInKm} km`, 
+                    duration: `${durationInMin} min`, 
+                    polyline: coordinates 
+                });
+            
                 showMessage({ message: "Route calculated", type: "success", icon: "success" });
             } else {
                 showMessage({ message: "Could not calculate route", type: "danger", icon: "danger" });

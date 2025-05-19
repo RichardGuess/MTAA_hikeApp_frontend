@@ -145,12 +145,6 @@ export default function HomeScreen() {
     };
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      getHikes();
-    }, [])
-  );
-
   const handleHikePress = (hike: Hike) => {
     if (deleteMode) {
       Alert.alert(
